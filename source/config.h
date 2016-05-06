@@ -36,7 +36,7 @@ typedef struct {
     u8 bgTop1[3];
     u8 bgTop2[3];
     u8 bgBot[3];
-    u8 highlight[3];
+    u8 highlight[4];
     u8 borders[3];
     u8 fntDef[3];
     u8 fntSel[3];
