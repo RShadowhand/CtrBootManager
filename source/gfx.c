@@ -18,12 +18,12 @@
 
 u8 *gfxGetFramebuffer(gfxScreen_t screen, gfx3dSide_t side, u16 *width, u16 *height) {
     if (screen == GFX_TOP) {
-        *width = 240;
-        *height = 400;
+		if (width) *width = 240;
+        if (height) *height = 400;
         return PTR_TOP_SCREEN_BUF;
     } else {
-        *width = 240;
-        *height = 320;
+        if (width) *width = 240;
+        if (height) *height = 320;
         return PTR_BOT_SCREEN_BUF;
     }
 }
@@ -132,7 +132,7 @@ void gfxFillColorGradient(gfxScreen_t screen, gfx3dSide_t side, u8 rgbColorStart
     }
 }
 
-void _gfxDrawRectangle(gfxScreen_t screen, gfx3dSide_t side, u8 rgbColor[3], s16 x, s16 y, u16 width, u16 height) {
+void _gfxDrawRectangle(gfxScreen_t screen, gfx3dSide_t side, u8 rgbColor[4], s16 x, s16 y, u16 width, u16 height) {
     u16 fbWidth, fbHeight;
     u8 *fbAdr = gfxGetFramebuffer(screen, side, &fbWidth, &fbHeight);
 
@@ -150,23 +150,43 @@ void _gfxDrawRectangle(gfxScreen_t screen, gfx3dSide_t side, u8 rgbColor[3], s16
     if (x + width >= fbWidth)width = fbWidth - x;
     if (y + height >= fbHeight)height = fbHeight - y;
 
-    u8 colorLine[width * 3];
+	if ( rgbColor[3] == 0xFF )
+	{
+		u8 colorLine[width * 3];
 
-    int j;
-    for (j = 0; j < width; j++) {
-        colorLine[j * 3 + 0] = rgbColor[2];
-        colorLine[j * 3 + 1] = rgbColor[1];
-        colorLine[j * 3 + 2] = rgbColor[0];
-    }
+		int j;
+		for (j = 0; j < width; j++) {
+			colorLine[j * 3 + 0] = rgbColor[2];
+			colorLine[j * 3 + 1] = rgbColor[1];
+			colorLine[j * 3 + 2] = rgbColor[0];
+		}
 
-    fbAdr += fbWidth * 3 * y;
-    for (j = 0; j < height; j++) {
-        memcpy(&fbAdr[x * 3], colorLine, width * 3);
-        fbAdr += fbWidth * 3;
-    }
+		fbAdr += fbWidth * 3 * y;
+		for (j = 0; j < height; j++) {
+			memcpy(&fbAdr[x * 3], colorLine, width * 3);
+			fbAdr += fbWidth * 3;
+		}
+	}
+	else
+	{
+		float alpha = (float)rgbColor[3] / 255.f;
+		float one_minus_alpha = 1.f - alpha;
+		int i, j;
+		fbAdr += fbWidth * 3 * y;
+		for (j = 0; j < height; j++)
+		{
+			for (i = 0; i < width; i++)
+			{
+				fbAdr[3*(i+x)+0] = (u8)(alpha*(float)rgbColor[0]+one_minus_alpha*(float)fbAdr[3*(i+x)+0]);
+				fbAdr[3*(i+x)+1] = (u8)(alpha*(float)rgbColor[1]+one_minus_alpha*(float)fbAdr[3*(i+x)+1]);
+				fbAdr[3*(i+x)+2] = (u8)(alpha*(float)rgbColor[2]+one_minus_alpha*(float)fbAdr[3*(i+x)+2]);	
+			}
+			fbAdr += fbWidth * 3;
+		}
+	}
 }
 
-void gfxDrawRectangle(gfxScreen_t screen, gfx3dSide_t side, u8 rgbColor[3], s16 x, s16 y, u16 width, u16 height) {
+void gfxDrawRectangle(gfxScreen_t screen, gfx3dSide_t side, u8 rgbColor[4], s16 x, s16 y, u16 width, u16 height) {
     _gfxDrawRectangle(screen, side, rgbColor, 240 - y, x, height, width);
 }
 
