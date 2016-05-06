@@ -27,6 +27,22 @@ void setColor(u8 *cfgColor, const char *color) {
     cfgColor[2] = (u8) (l & 0xFF);
 }
 
+void setColorAlpha(u8 *cfgColor, const char *color) {
+	if ( (color[6] >= '0' && color[6] <= '9') || (color[6] >= 'A' && color[6] <= 'F') || (color[6] >= 'a' && color[6] <= 'f') )
+	{
+		long l = strtoul(color, NULL, 16);
+		cfgColor[0] = (u8) (l >> 8 & 0xFF);
+		cfgColor[1] = (u8) (l >> 16 & 0xFF);
+		cfgColor[2] = (u8) (l >> 24 & 0xFF);
+		cfgColor[3] = (u8) (l & 0xFF);
+	}
+	else
+	{
+		setColor(cfgColor, color);
+		cfgColor[3] = 0xFF;
+	}
+}
+
 static char *ini_buffer_reader(char *str, int num, void *stream) {
     buffer_ctx *ctx = (buffer_ctx *) stream;
     int idx = 0;
@@ -92,8 +108,8 @@ static int handler(void *user, const char *section, const char *name,
         setColor(config->bgTop2, item);
     } else if (MATCH("theme", "bgBottom")) {
         setColor(config->bgBot, item);
-    } else if (MATCH("theme", "highlight")) {
-        setColor(config->highlight, item);
+	} else if (MATCH("theme", "highlight")) {
+        setColorAlpha(config->highlight, item);
     } else if (MATCH("theme", "borders")) {
         setColor(config->borders, item);
     } else if (MATCH("theme", "font1")) {
@@ -239,7 +255,10 @@ void configSave() {
     size += snprintf(cfg+size, 256, "bgTop1=%02X%02X%02X;\n", config->bgTop1[0], config->bgTop1[1], config->bgTop1[2]);
     size += snprintf(cfg+size, 256, "bgTop2=%02X%02X%02X;\n", config->bgTop2[0], config->bgTop2[1], config->bgTop2[2]);
     size += snprintf(cfg+size, 256, "bgBottom=%02X%02X%02X;\n", config->bgBot[0], config->bgBot[1], config->bgBot[2]);
-    size += snprintf(cfg+size, 256, "highlight=%02X%02X%02X;\n", config->highlight[0], config->highlight[1], config->highlight[2]);
+	if ( config->highlight[3] < 0xFF )
+		size += snprintf(cfg+size, 256, "highlight=%02X%02X%02X%02X;\n", config->highlight[2], config->highlight[1], config->highlight[0], config->highlight[3]);
+	else
+		size += snprintf(cfg+size, 256, "highlight=%02X%02X%02X;\n", config->highlight[0], config->highlight[1], config->highlight[2]);		
     size += snprintf(cfg+size, 256, "borders=%02X%02X%02X;\n", config->borders[0], config->borders[1], config->borders[2]);
     size += snprintf(cfg+size, 256, "font1=%02X%02X%02X;\n", config->fntDef[0], config->fntDef[1], config->fntDef[2]);
     size += snprintf(cfg+size, 256, "font2=%02X%02X%02X;\n", config->fntSel[0], config->fntSel[1], config->fntSel[2]);
@@ -250,7 +269,7 @@ void configSave() {
         size += snprintf(cfg+size, 256, "[entry];\n");
         size += snprintf(cfg+size, 256, "title=%s;\n", config->entries[i].title);
         size += snprintf(cfg+size, 256, "path=%s;\n", config->entries[i].path);
-        size += snprintf(cfg+size, 256, "offset=%ld;\n", config->entries[i].offset);
+        size += snprintf(cfg+size, 256, "offset=%x;\n", (int)config->entries[i].offset);
         size += snprintf(cfg+size, 256, "key=%i;\n\n", config->entries[i].key);
     }
 #ifdef ARM9
