@@ -10,6 +10,7 @@
 #include "arm9/source/common.h"
 #include "arm9/source/hid.h"
 #include "arm9/source/fatfs/ff.h"
+#include "screeninit.h"
 
 #else
 #include <3ds.h>
@@ -60,6 +61,7 @@ int main() {
     *(u32 *) 0x10000020 = 0x340;
     FATFS fs;
     f_mount(&fs, "0:", 0);
+	initScreens();
 #else
     if (netloader_init() != 0) {
         // fix SOC_Initialize
