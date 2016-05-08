@@ -16,6 +16,9 @@ file(GLOB_RECURSE SOURCE_FILES
 file(GLOB_RECURSE SOURCE_FILES_ARM9
     source/arm9/source/*
 )
+file(GLOB_RECURSE SOURCE_FILES_SCREENINIT
+    screeninit/source/*
+)
 
 # Filter
 file(GLOB FILTER_FILES
@@ -58,6 +61,18 @@ add_3dsx_target(CtrBootManager NO_SMDH) # Generate the .3dsx and .smdh from the 
 add_netload_target(CtrBootManager_3dslink CtrBootManager)
 add_citra_target(CtrBootManager_Citra CtrBootManager)
 #set_target_properties(CtrBootManager PROPERTIES COMPILE_FLAGS "-DCITRA")
+
+###################
+# Screen init
+###################
+add_executable(screeninit ${SOURCE_FILES_SCREENINIT})
+set(ASFLAGS "-mcpu=mpcore -mfloat-abi=hard")
+set(CFLAGS "-Wall -Wextra -MMD -MP -mthumb -mthumb-interwork $(ASFLAGS) -fno-builtin -std=c11 -Wno-main -O2 -flto -ffast-math")
+set_target_properties(screeninit PROPERTIES COMPILE_FLAGS ${CFLAGS})
+set_source_files_properties(screeninit/source/start.s PROPERTIES COMPILE_FLAGS "-x assembler-with-cpp ${CFLAGS}")
+set_target_properties(screeninit PROPERTIES LINK_FLAGS
+        "-nostdlib -nostartfiles -g -mthumb -mthumb-interwork -Wl,-Map,screeninit.map -T ${CMAKE_SOURCE_DIR}/screeninit/linker.ld ")
+add_a9lh_target(screeninit_a9lh screeninit)
 
 ###################
 # CtrBootManager9
