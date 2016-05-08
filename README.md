@@ -26,6 +26,7 @@ Binaries should now be in the `build` folder.
  * Fluto : graphics
  * Arkhandar : graphics
  * dotjasp : graphics (regionfree icon)
+
 ###For screeninit:
  * Aurora Wright
  * dark_samus
@@ -33,7 +34,7 @@ Binaries should now be in the `build` folder.
  * Normmatt
  * delebile 
  * tiniVi
- * 
+
 ###Other credits:
 Readme by gemarcano
 This project also uses [Brahma](https://github.com/patois/Brahma). See its repository for its credits.
