@@ -13,5 +13,5 @@ font_s fontDefault =
                 defaultData,
                 defaultDesc,
                 16,
-                (u8[]) {0xFF, 0xFF, 0xFF}
+                (u8[]) {0xFF, 0xFF, 0xFF, 0xFF}
         };
