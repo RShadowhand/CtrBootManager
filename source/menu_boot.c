@@ -147,10 +147,23 @@ static void draw(int boot_index, time_t elapsed) {
     for (i = 0; i < config->count; i++) {
         drawItem(i == boot_index, 16 * i, config->entries[i].title);
         if (i == boot_index) {
-            drawInfo("Name: %s\nPath: %s\nOffset: 0x%lx\n\n\nPress (A) to launch\nPress (X) to remove entry\n",
-                     config->entries[i].title,
-                     config->entries[i].path,
-                     config->entries[i].offset);
+        #ifdef ARM9
+            if ( config->entries[i].patchesCount > 0 )
+            {
+                drawInfo("Name: %s\nPath: %s\nOffset: 0x%lx\nPatches count: %d\n\nPress (A) to launch\nPress (X) to remove entry\n",
+                        config->entries[i].title,
+                        config->entries[i].path,
+                        config->entries[i].offset,
+                        config->entries[i].patchesCount);
+            }
+            else
+        #endif
+            {
+                drawInfo("Name: %s\nPath: %s\nOffset: 0x%lx\n\n\nPress (A) to launch\nPress (X) to remove entry\n",
+                        config->entries[i].title,
+                        config->entries[i].path,
+                        config->entries[i].offset);
+            }
         }
     }
     drawItem(boot_index == config->count, 16 * i, "More...");
