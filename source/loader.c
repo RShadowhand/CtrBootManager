@@ -12,13 +12,41 @@
 
 #endif
 
+#include "loader.h"
 #include "utility.h"
 #include "memory.h"
 
 #ifdef ARM9
 
-int load_bin(char *path, long offset) {
+unsigned char *memsearch(unsigned char *startPos, const void *pattern, int size, int patternSize) // From Luma3DS' pathchanger.c
+{
+    const unsigned char *patternc = (const unsigned char *)pattern;
 
+    //Preprocessing
+    int table[256];
+
+    int i;
+    for(i = 0; i < 256; ++i)
+        table[i] = patternSize + 1;
+    for(i = 0; i < patternSize; ++i)
+        table[patternc[i]] = patternSize - i;
+
+    //Searching
+    int j = 0;
+
+    while(j <= size - patternSize)
+    {
+        if(memcmp(patternc, startPos + j, patternSize) == 0)
+            return startPos + j;
+        j += table[startPos[j + patternSize]];
+    }
+
+    return NULL;
+}
+
+int load_bin(char *path, long offset, binary_patch* patches, int patchesCount) {
+
+    // Load binary
     size_t size = fileSize(path);
     if (!size) {
         return -1;
@@ -27,7 +55,30 @@ int load_bin(char *path, long offset) {
     if (fileReadOffset(path, (void *) PTR_PAYLOAD_MAIN_DATA, PTR_PAYLOAD_SIZE_MAX, offset) != 0) {
         return -1;
     }
+    
+    // Apply patches
+    unsigned char* oriBinary = (unsigned char*)PTR_PAYLOAD_MAIN_DATA;
+    for (int i = 0 ; i < patchesCount ; i++)
+    {
+        unsigned char* binFound = oriBinary;
+        int curOccurence = 0;
+        while ( NULL != (binFound = memsearch(binFound, patches[i].memToSearch, size-offset+oriBinary-binFound, patches[i].memToSearchSize)) )
+        {
+            curOccurence++;
+            if ( patches[i].occurence == 0 || curOccurence == patches[i].occurence )
+            {
+                memcpy(binFound, patches[i].memOverwrite, patches[i].memOverwriteSize);
+                
+                if ( patches[i].occurence > 0 )
+                    break;
+                binFound += patches[i].memOverwriteSize;
+            }
+            else
+                binFound += patches[i].memToSearchSize;
+        }
+    }
 
+    // Start binary
     gfxClear();
 
     memcpy((void *) PTR_PAYLOAD_STAGE2, stage2_bin, stage2_bin_size);
@@ -47,7 +98,7 @@ int load_3dsx(char *path) {
     return 0;
 }
 
-int load_bin(char *path, long offset) {
+int load_bin(char *path, long offset, binary_patch* patches, int patchesCount) {
 
     gfxExit();
 
@@ -69,7 +120,7 @@ int load_bin(char *path, long offset) {
 
 #endif
 
-int load(char *path, long offset) {
+int load(char *path, long offset, binary_patch* patches, int patchesCount) {
     // check for reboot/poweroff
     if (strcasecmp(path, "reboot") == 0) {
         reboot();
@@ -83,7 +134,7 @@ int load(char *path, long offset) {
         const char *ext = get_filename_ext(path);
         if (strcasecmp(ext, "bin") == 0
             || strcasecmp(ext, "dat") == 0) {
-            return load_bin(path, offset);
+            return load_bin(path, offset, patches, patchesCount);
 #ifndef ARM9
         } else if (strcasecmp(ext, "3dsx") == 0) {
             return load_3dsx(path);
