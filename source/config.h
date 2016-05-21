@@ -44,9 +44,9 @@ typedef struct {
     u8 bgTop2[3];
     u8 bgBot[3];
     u8 highlight[4];
-    u8 borders[3];
-    u8 fntDef[3];
-    u8 fntSel[3];
+    u8 borders[4];
+    u8 fntDef[4];
+    u8 fntSel[4];
     char bgImgTop[128];
     char bgImgBot[128];
     bool imgError;
