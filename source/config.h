@@ -8,22 +8,29 @@ extern "C" {
 #ifdef ARM9
 
 #include "arm9/source/common.h"
-
 #define CONFIG_PATH "/a9lh.cfg"
+
 #else
+    
 #include <3ds.h>
 #include "utility.h"
 #define CONFIG_PATH "/boot.cfg"
+
 #endif
+
+#include "loader.h" // Binary patches define
 
 #define BIT(n) (1U<<(n))
 #define CONFIG_MAX_ENTRIES 11
+#define PATCHES_MAX_PER_ENTRY 4
 
 typedef struct {
     char title[64];
     char path[128];
     int key;
     long offset;
+    binary_patch patches[PATCHES_MAX_PER_ENTRY];
+    int patchesCount;
 } boot_entry_s;
 
 typedef struct {
