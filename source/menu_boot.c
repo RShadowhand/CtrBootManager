@@ -37,7 +37,9 @@ int boot(int index) {
 
 #ifdef ARM9
     return load(config->entries[index].path,
-                config->entries[index].offset);
+                config->entries[index].offset,
+                config->entries[index].patches,
+                config->entries[index].patchesCount);
 #else
     int delay = config->autobootfix;
     while (aptMainLoop() && delay > 0) {
@@ -45,7 +47,9 @@ int boot(int index) {
         delay--;
     }
     return load(config->entries[index].path,
-                config->entries[index].offset);
+                config->entries[index].offset,
+                config->entries[index].patches,
+                config->entries[index].patchesCount);
 #endif
 }
 
