@@ -33,7 +33,7 @@ int menu_choose() {
     pick_file(&picked, "/");
 
     if (strlen(picked.path) > 0) {
-        return load(picked.path, 0);
+        return load(picked.path, 0, NULL, 0);
     }
 
     return -1;
