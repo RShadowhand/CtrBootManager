@@ -31,9 +31,9 @@ void setColorAlpha(u8 *cfgColor, const char *color) {
 	if ( (color[6] >= '0' && color[6] <= '9') || (color[6] >= 'A' && color[6] <= 'F') || (color[6] >= 'a' && color[6] <= 'f') )
 	{
 		long l = strtoul(color, NULL, 16);
-		cfgColor[0] = (u8) (l >> 8 & 0xFF);
+		cfgColor[0] = (u8) (l >> 24 & 0xFF);
 		cfgColor[1] = (u8) (l >> 16 & 0xFF);
-		cfgColor[2] = (u8) (l >> 24 & 0xFF);
+		cfgColor[2] = (u8) (l >> 8 & 0xFF);
 		cfgColor[3] = (u8) (l & 0xFF);
 	}
 	else
@@ -144,11 +144,11 @@ static int handler(void *user, const char *section, const char *name,
 	} else if (MATCH("theme", "highlight")) {
         setColorAlpha(config->highlight, item);
     } else if (MATCH("theme", "borders")) {
-        setColor(config->borders, item);
+        setColorAlpha(config->borders, item);
     } else if (MATCH("theme", "font1")) {
-        setColor(config->fntDef, item);
+        setColorAlpha(config->fntDef, item);
     } else if (MATCH("theme", "font2")) {
-        setColor(config->fntSel, item);
+        setColorAlpha(config->fntSel, item);
     } else if (MATCH("theme", "bgImgTop")) {
         strncpy(config->bgImgTop, item, 128);
     } else if (MATCH("theme", "bgImgBot")) {
@@ -207,10 +207,10 @@ void configThemeInit() {
     memcpy(config->bgTop1, (u8[3]) {0x4a, 0x00, 0x31}, sizeof(u8[3]));
     memcpy(config->bgTop2, (u8[3]) {0x6f, 0x01, 0x49}, sizeof(u8[3]));
     memcpy(config->bgBot, (u8[3]) {0x6f, 0x01, 0x49}, sizeof(u8[3]));
-    memcpy(config->highlight, (u8[3]) {0xdc, 0xdc, 0xdc}, sizeof(u8[3]));
-    memcpy(config->borders, (u8[3]) {0xff, 0xff, 0xff}, sizeof(u8[3]));
-    memcpy(config->fntDef, (u8[3]) {0xff, 0xff, 0xff}, sizeof(u8[3]));
-    memcpy(config->fntSel, (u8[3]) {0x00, 0x00, 0x00}, sizeof(u8[3]));
+    memcpy(config->highlight, (u8[4]) {0xdc, 0xdc, 0xdc, 0xff}, sizeof(u8[4]));
+    memcpy(config->borders, (u8[4]) {0xff, 0xff, 0xff, 0xff}, sizeof(u8[4]));
+    memcpy(config->fntDef, (u8[4]) {0xff, 0xff, 0xff, 0xff}, sizeof(u8[4]));
+    memcpy(config->fntSel, (u8[4]) {0x00, 0x00, 0x00, 0xff}, sizeof(u8[4]));
 }
 
 int configInit() {
@@ -253,7 +253,7 @@ int configInit() {
         return -1;
     }
 
-    memcpy(fontDefault.color, config->fntDef, sizeof(u8[3]));
+    memcpy(fontDefault.color, config->fntDef, sizeof(u8[4]));
     loadBg(GFX_TOP);
     loadBg(GFX_BOTTOM);
 
@@ -322,13 +322,27 @@ void configSave() {
     size += snprintf(cfg+size, 256, "bgTop1=%02X%02X%02X;\n", config->bgTop1[0], config->bgTop1[1], config->bgTop1[2]);
     size += snprintf(cfg+size, 256, "bgTop2=%02X%02X%02X;\n", config->bgTop2[0], config->bgTop2[1], config->bgTop2[2]);
     size += snprintf(cfg+size, 256, "bgBottom=%02X%02X%02X;\n", config->bgBot[0], config->bgBot[1], config->bgBot[2]);
+    
     if ( config->highlight[3] < 0xFF )
-        size += snprintf(cfg+size, 256, "highlight=%02X%02X%02X%02X;\n", config->highlight[2], config->highlight[1], config->highlight[0], config->highlight[3]);
+        size += snprintf(cfg+size, 256, "highlight=%02X%02X%02X%02X;\n", config->highlight[0], config->highlight[1], config->highlight[2], config->highlight[3]);
     else
-        size += snprintf(cfg+size, 256, "highlight=%02X%02X%02X;\n", config->highlight[0], config->highlight[1], config->highlight[2]);		
-    size += snprintf(cfg+size, 256, "borders=%02X%02X%02X;\n", config->borders[0], config->borders[1], config->borders[2]);
-    size += snprintf(cfg+size, 256, "font1=%02X%02X%02X;\n", config->fntDef[0], config->fntDef[1], config->fntDef[2]);
-    size += snprintf(cfg+size, 256, "font2=%02X%02X%02X;\n", config->fntSel[0], config->fntSel[1], config->fntSel[2]);
+        size += snprintf(cfg+size, 256, "highlight=%02X%02X%02X;\n", config->highlight[0], config->highlight[1], config->highlight[2]);
+    
+    if ( config->borders[3] < 0xFF )
+        size += snprintf(cfg+size, 256, "borders=%02X%02X%02X%02X;\n", config->borders[0], config->borders[1], config->borders[2], config->borders[3]);
+    else
+        size += snprintf(cfg+size, 256, "borders=%02X%02X%02X;\n", config->borders[0], config->borders[1], config->borders[2]);
+    
+    if ( config->fntDef[3] < 0xFF )
+        size += snprintf(cfg+size, 256, "font1=%02X%02X%02X%02X;\n", config->fntDef[0], config->fntDef[1], config->fntDef[2], config->fntDef[3]);
+    else
+        size += snprintf(cfg+size, 256, "font1=%02X%02X%02X;\n", config->fntDef[0], config->fntDef[1], config->fntDef[2]);
+    
+    if ( config->fntSel[3] < 0xFF )
+        size += snprintf(cfg+size, 256, "font2=%02X%02X%02X%02X;\n", config->fntSel[0], config->fntSel[1], config->fntSel[2], config->fntSel[3]);
+    else
+        size += snprintf(cfg+size, 256, "font2=%02X%02X%02X;\n", config->fntSel[0], config->fntSel[1], config->fntSel[2]);
+    
     size += snprintf(cfg+size, 256, "bgImgTop=%s;\n", config->bgImgTop);
     size += snprintf(cfg+size, 256, "bgImgBot=%s;\n\n", config->bgImgBot);
 
