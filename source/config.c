@@ -233,24 +233,25 @@ int configInit() {
 
     // read config file to buffer
     size_t size = fileSize(CONFIG_PATH);
-    if (!size) {
-        return -1;
-    }
+    if ( size != -1 && size > 0 )
+    {
+        char buffer[size];
+        memset(buffer, 0, size);
+        if (fileRead(CONFIG_PATH, buffer, size) != 0)
+        {
+            debug("Could not read config file, creating one...");
+            configSave();
+        }
+        else
+        {
+            ctx.ptr = buffer;
+            ctx.bytes_left = strlen(ctx.ptr);
 
-    char buffer[size];
-    memset(buffer, 0, size);
-    if (fileRead(CONFIG_PATH, buffer, size) != 0) {
-        debug("Could not read config file, creating one...");
-        configSave(); // write new config file
-        return -1;
-    }
-    ctx.ptr = buffer;
-    ctx.bytes_left = strlen(ctx.ptr);
-
-    if (ini_parse_stream((ini_reader) ini_buffer_reader, &ctx, handler, config) < 0) {
-        debug("Could not parse config file, creating one...");
-        configSave(); // write new config file
-        return -1;
+            if (ini_parse_stream((ini_reader) ini_buffer_reader, &ctx, handler, config) < 0) {
+                debug("Could not parse config file, creating one...");
+                configSave(); // write new config file
+            }
+        }
     }
 
     memcpy(fontDefault.color, config->fntDef, sizeof(u8[4]));
