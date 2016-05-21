@@ -39,29 +39,55 @@ void drawPixel(int x, int y, char r, char g, char b, u8 *screen) {
     screen[v + 2] = r;
 }
 
-void drawLine(gfxScreen_t screen, gfx3dSide_t side, int x1, int y1, int x2, int y2, char r, char g, char b) {
+void drawPixelAlpha(int x, int y, char r, char g, char b, char a, u8 *screen) {
+    int height = 240;
+
+    u32 v = (height - 1 - y + x * height) * 3;
+
+    float alpha = (float)a / 255.f;
+	float one_minus_alpha = 1.f - alpha;
+
+	screen[v + 0] = (u8)(alpha*b+one_minus_alpha*(float)screen[v + 0]);
+	screen[v + 1] = (u8)(alpha*g+one_minus_alpha*(float)screen[v + 1]);
+	screen[v + 2] = (u8)(alpha*r+one_minus_alpha*(float)screen[v + 2]);
+}
+
+void drawLine(gfxScreen_t screen, gfx3dSide_t side, int x1, int y1, int x2, int y2, char r, char g, char b, char a) {
     u16 fbWidth, fbHeight;
     u8 *fbAdr = gfxGetFramebuffer(screen, side, &fbWidth, &fbHeight);
 
     int x, y;
-    if (x1 == x2) {
-        if (y1 < y2) for (y = y1; y < y2; y++) drawPixel(x1, y, r, g, b, fbAdr);
-        else for (y = y2; y < y1; y++) drawPixel(x1, y, r, g, b, fbAdr);
-    } else {
-        if (x1 < x2) for (x = x1; x < x2; x++) drawPixel(x, y1, r, g, b, fbAdr);
-        else for (x = x2; x < x1; x++) drawPixel(x, y1, r, g, b, fbAdr);
+    if ( a == 0xFF )
+    {
+        if (x1 == x2) {
+            if (y1 < y2) for (y = y1; y < y2; y++) drawPixel(x1, y, r, g, b, fbAdr);
+            else for (y = y2; y < y1; y++) drawPixel(x1, y, r, g, b, fbAdr);
+        } else {
+            if (x1 < x2) for (x = x1; x < x2; x++) drawPixel(x, y1, r, g, b, fbAdr);
+            else for (x = x2; x < x1; x++) drawPixel(x, y1, r, g, b, fbAdr);
+        }
+    }
+    else if ( a > 0 )
+    {
+        if (x1 == x2) {
+            if (y1 < y2) for (y = y1; y < y2; y++) drawPixelAlpha(x1, y, r, g, b, a, fbAdr);
+            else for (y = y2; y < y1; y++) drawPixelAlpha(x1, y, r, g, b, a, fbAdr);
+        } else {
+            if (x1 < x2) for (x = x1; x < x2; x++) drawPixelAlpha(x, y1, r, g, b, a, fbAdr);
+            else for (x = x2; x < x1; x++) drawPixelAlpha(x, y1, r, g, b, a, fbAdr);
+        }
     }
 }
 
-void drawRect(gfxScreen_t screen, gfx3dSide_t side, int x1, int y1, int x2, int y2, char r, char g, char b) {
-    drawLine(screen, side, x1, y1, x2, y1, r, g, b);
-    drawLine(screen, side, x2, y1, x2, y2, r, g, b);
-    drawLine(screen, side, x1, y2, x2, y2, r, g, b);
-    drawLine(screen, side, x1, y1, x1, y2, r, g, b);
+void drawRect(gfxScreen_t screen, gfx3dSide_t side, int x1, int y1, int x2, int y2, char r, char g, char b, char a) {
+    drawLine(screen, side, x1+1, y1, x2, y1, r, g, b, a);
+    drawLine(screen, side, x2, y1, x2, y2, r, g, b, a);
+    drawLine(screen, side, x1, y2, x2+1, y2, r, g, b, a);
+    drawLine(screen, side, x1, y1, x1, y2, r, g, b, a);
 }
 
-void drawRectColor(gfxScreen_t screen, gfx3dSide_t side, int x1, int y1, int x2, int y2, u8 *color) {
-    drawRect(screen, side, x1, y1, x2, y2, color[0], color[1], color[2]);
+void drawRectColor(gfxScreen_t screen, gfx3dSide_t side, int x1, int y1, int x2, int y2, u8 *rgbaColor) {
+    drawRect(screen, side, x1, y1, x2, y2, rgbaColor[0], rgbaColor[1], rgbaColor[2], rgbaColor[3]);
 }
 
 void gfxDrawTextf(gfxScreen_t screen, gfx3dSide_t side, font_s *f, s16 x, s16 y, const char *fmt, ...) {
@@ -132,7 +158,7 @@ void gfxFillColorGradient(gfxScreen_t screen, gfx3dSide_t side, u8 rgbColorStart
     }
 }
 
-void _gfxDrawRectangle(gfxScreen_t screen, gfx3dSide_t side, u8 rgbColor[4], s16 x, s16 y, u16 width, u16 height) {
+void _gfxDrawRectangle(gfxScreen_t screen, gfx3dSide_t side, u8 rgbaColor[4], s16 x, s16 y, u16 width, u16 height) {
     u16 fbWidth, fbHeight;
     u8 *fbAdr = gfxGetFramebuffer(screen, side, &fbWidth, &fbHeight);
 
@@ -150,15 +176,15 @@ void _gfxDrawRectangle(gfxScreen_t screen, gfx3dSide_t side, u8 rgbColor[4], s16
     if (x + width >= fbWidth)width = fbWidth - x;
     if (y + height >= fbHeight)height = fbHeight - y;
 
-	if ( rgbColor[3] == 0xFF )
+	if ( rgbaColor[3] == 0xFF )
 	{
 		u8 colorLine[width * 3];
 
 		int j;
 		for (j = 0; j < width; j++) {
-			colorLine[j * 3 + 0] = rgbColor[2];
-			colorLine[j * 3 + 1] = rgbColor[1];
-			colorLine[j * 3 + 2] = rgbColor[0];
+			colorLine[j * 3 + 0] = rgbaColor[2];
+			colorLine[j * 3 + 1] = rgbaColor[1];
+			colorLine[j * 3 + 2] = rgbaColor[0];
 		}
 
 		fbAdr += fbWidth * 3 * y;
@@ -167,9 +193,9 @@ void _gfxDrawRectangle(gfxScreen_t screen, gfx3dSide_t side, u8 rgbColor[4], s16
 			fbAdr += fbWidth * 3;
 		}
 	}
-	else
+	else if ( rgbaColor[3] > 0 )
 	{
-		float alpha = (float)rgbColor[3] / 255.f;
+		float alpha = (float)rgbaColor[3] / 255.f;
 		float one_minus_alpha = 1.f - alpha;
 		int i, j;
 		fbAdr += fbWidth * 3 * y;
@@ -177,9 +203,9 @@ void _gfxDrawRectangle(gfxScreen_t screen, gfx3dSide_t side, u8 rgbColor[4], s16
 		{
 			for (i = 0; i < width; i++)
 			{
-				fbAdr[3*(i+x)+0] = (u8)(alpha*(float)rgbColor[0]+one_minus_alpha*(float)fbAdr[3*(i+x)+0]);
-				fbAdr[3*(i+x)+1] = (u8)(alpha*(float)rgbColor[1]+one_minus_alpha*(float)fbAdr[3*(i+x)+1]);
-				fbAdr[3*(i+x)+2] = (u8)(alpha*(float)rgbColor[2]+one_minus_alpha*(float)fbAdr[3*(i+x)+2]);	
+				fbAdr[3*(i+x)+0] = (u8)(alpha*(float)rgbaColor[2]+one_minus_alpha*(float)fbAdr[3*(i+x)+0]);
+				fbAdr[3*(i+x)+1] = (u8)(alpha*(float)rgbaColor[1]+one_minus_alpha*(float)fbAdr[3*(i+x)+1]);
+				fbAdr[3*(i+x)+2] = (u8)(alpha*(float)rgbaColor[0]+one_minus_alpha*(float)fbAdr[3*(i+x)+2]);	
 			}
 			fbAdr += fbWidth * 3;
 		}
