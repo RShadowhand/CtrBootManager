@@ -48,11 +48,11 @@ void drawItem(bool selected, int y, const char *format, ...) {
     if (selected) {
         gfxDrawRectangle(GFX_TOP, GFX_LEFT, config->highlight, (s16) (MENU_MIN_X + 4), (s16) (y + MENU_MIN_Y), 361, 15);
     }
-    memcpy(fontDefault.color, selected ? config->fntSel : config->fntDef, sizeof(u8[3]));
+    memcpy(fontDefault.color, selected ? config->fntSel : config->fntDef, sizeof(u8[4]));
     gfxDrawText(GFX_TOP, GFX_LEFT, &fontDefault, msg, (s16) (MENU_MIN_X + 6),
                 (s16) y + (s16) MENU_MIN_Y);
 
-    memcpy(fontDefault.color, config->fntDef, sizeof(u8[3]));
+    memcpy(fontDefault.color, config->fntDef, sizeof(u8[4]));
 }
 
 void drawItemN(bool selected, int maxChar, int y, const char *format, ...) {
@@ -66,11 +66,11 @@ void drawItemN(bool selected, int maxChar, int y, const char *format, ...) {
     if (selected) {
         gfxDrawRectangle(GFX_TOP, GFX_LEFT, config->highlight, (s16) (MENU_MIN_X + 4), (s16) (y + MENU_MIN_Y), 361, 15);
     }
-    memcpy(fontDefault.color, selected ? config->fntSel : config->fntDef, sizeof(u8[3]));
+    memcpy(fontDefault.color, selected ? config->fntSel : config->fntDef, sizeof(u8[4]));
     gfxDrawTextN(GFX_TOP, GFX_LEFT, &fontDefault, msg, maxChar, (s16) (MENU_MIN_X + 6),
                  (s16) y + (s16) MENU_MIN_Y);
 
-    memcpy(fontDefault.color, config->fntDef, sizeof(u8[3]));
+    memcpy(fontDefault.color, config->fntDef, sizeof(u8[4]));
 }
 
 void drawInfo(const char *format, ...) {
