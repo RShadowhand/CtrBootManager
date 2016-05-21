@@ -43,6 +43,39 @@ void setColorAlpha(u8 *cfgColor, const char *color) {
 	}
 }
 
+void readStrAsHexData(const char *dataAsStr, char *data, int* dataSize) {
+    *dataSize = strlen(dataAsStr)/2;
+    for (int i = 0; i < *dataSize; i++)
+    {
+        if ( dataAsStr[0] >= '0' && dataAsStr[0] <= '9' )
+            data[i] = (dataAsStr[0]-'0')<<4;
+        else if ( dataAsStr[0] >= 'A' && dataAsStr[0] <= 'F' )
+            data[i] = (10+dataAsStr[0]-'A')<<4;
+        else if ( dataAsStr[0] >= 'a' && dataAsStr[0] <= 'f' )
+            data[i] = (10+dataAsStr[0]-'a')<<4;
+        else
+            data[i] = 0;
+        if ( dataAsStr[1] >= '0' && dataAsStr[1] <= '9' )
+            data[i] += (dataAsStr[1]-'0');
+        else if ( dataAsStr[1] >= 'A' && dataAsStr[1] <= 'F' )
+            data[i] += (10+dataAsStr[1]-'A');
+        else if ( dataAsStr[1] >= 'a' && dataAsStr[1] <= 'f' )
+            data[i] += (10+dataAsStr[1]-'a');
+        dataAsStr+=2;
+    }
+}
+
+void writeHexDataAsStr(const char *data, int dataSize, char* dataAsStr) {
+    
+    char const hex_chars[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+    for (int i = 0; i < dataSize; i++)
+    {
+        dataAsStr[0] = hex_chars[data[i]/16];
+        dataAsStr[1] = hex_chars[data[i]%16];
+        dataAsStr += 2;
+    }
+}
+
 static char *ini_buffer_reader(char *str, int num, void *stream) {
     buffer_ctx *ctx = (buffer_ctx *) stream;
     int idx = 0;
@@ -101,7 +134,7 @@ static int handler(void *user, const char *section, const char *name,
         config->autobootfix = atoi(item);
     }
 
-        // theme
+    // theme
     else if (MATCH("theme", "bgTop1")) {
         setColor(config->bgTop1, item);
     } else if (MATCH("theme", "bgTop2")) {
@@ -122,14 +155,41 @@ static int handler(void *user, const char *section, const char *name,
         strncpy(config->bgImgBot, item, 128);
     }
 
-        // entries
+    // entries
     else if (MATCH("entry", "title")) {
         strncpy(config->entries[config->count].title, item, 64);
     } else if (MATCH("entry", "path")) {
         strncpy(config->entries[config->count].path, item, 128);
     } else if (MATCH("entry", "offset")) {
         config->entries[config->count].offset = strtoul(item, NULL, 16);
-    } else if (MATCH("entry", "key")) {
+    }
+    // Binary patches for current entry
+    else if (MATCH("entry", "patchMemSearch")) {
+        binary_patch* curPatch = &config->entries[config->count].patches[config->entries[config->count].patchesCount];
+        readStrAsHexData(item, curPatch->memToSearch, &curPatch->memToSearchSize);
+    } else if (MATCH("entry", "patchMemOverwrite")) {
+        binary_patch* curPatch = &config->entries[config->count].patches[config->entries[config->count].patchesCount];
+        readStrAsHexData(item, curPatch->memOverwrite, &curPatch->memOverwriteSize);
+    } else if (MATCH("entry", "patchMemOverwriteStr")) {
+        binary_patch* curPatch = &config->entries[config->count].patches[config->entries[config->count].patchesCount];
+        curPatch->memOverwriteSize = strlen(item)+1;
+        memcpy(curPatch->memOverwrite, item, curPatch->memOverwriteSize);
+    } else if (MATCH("entry", "patchMemOverwriteWStr")) {
+        binary_patch* curPatch = &config->entries[config->count].patches[config->entries[config->count].patchesCount];
+        int strSize = strlen(item)+1;
+        curPatch->memOverwriteSize = strSize*2;
+        for (int i = 0; i < strSize; i++)
+        {
+            curPatch->memOverwrite[2*i] = item[i];
+            curPatch->memOverwrite[2*i+1] = '\0';
+        }
+    } else if (MATCH("entry", "patchOccurence")) {
+        int prevPatchesCount = config->entries[config->count].patchesCount;
+        config->entries[config->count].patches[prevPatchesCount].occurence = atoi(item);
+        config->entries[config->count].patchesCount = (prevPatchesCount < PATCHES_MAX_PER_ENTRY) ? (prevPatchesCount+1) : prevPatchesCount;
+    }
+    // End current entry 
+    else if (MATCH("entry", "key")) {
         if(strlen(config->entries[config->count].title) > 0) {
             config->entries[config->count].key = atoi(item);
             config->count++;
@@ -201,10 +261,14 @@ int configInit() {
 }
 
 int configAddEntry(char *title, char *path, long offset) {
+    
+    if (config->count >= CONFIG_MAX_ENTRIES)
+        return 1;
 
     strncpy(config->entries[config->count].title, title, 64);
     strncpy(config->entries[config->count].path, path, 128);
     config->entries[config->count].offset = offset;
+    config->entries[config->count].patchesCount = 0;
     config->entries[config->count].key = -1;
     config->count++;
     configSave();
@@ -213,6 +277,9 @@ int configAddEntry(char *title, char *path, long offset) {
 }
 
 int configRemoveEntry(int index) {
+
+    if ( index >= config->count )
+        return 1;
 
     int i = 0;
     for(i=0; i<config->count; i++) {
@@ -255,10 +322,10 @@ void configSave() {
     size += snprintf(cfg+size, 256, "bgTop1=%02X%02X%02X;\n", config->bgTop1[0], config->bgTop1[1], config->bgTop1[2]);
     size += snprintf(cfg+size, 256, "bgTop2=%02X%02X%02X;\n", config->bgTop2[0], config->bgTop2[1], config->bgTop2[2]);
     size += snprintf(cfg+size, 256, "bgBottom=%02X%02X%02X;\n", config->bgBot[0], config->bgBot[1], config->bgBot[2]);
-	if ( config->highlight[3] < 0xFF )
-		size += snprintf(cfg+size, 256, "highlight=%02X%02X%02X%02X;\n", config->highlight[2], config->highlight[1], config->highlight[0], config->highlight[3]);
-	else
-		size += snprintf(cfg+size, 256, "highlight=%02X%02X%02X;\n", config->highlight[0], config->highlight[1], config->highlight[2]);		
+    if ( config->highlight[3] < 0xFF )
+        size += snprintf(cfg+size, 256, "highlight=%02X%02X%02X%02X;\n", config->highlight[2], config->highlight[1], config->highlight[0], config->highlight[3]);
+    else
+        size += snprintf(cfg+size, 256, "highlight=%02X%02X%02X;\n", config->highlight[0], config->highlight[1], config->highlight[2]);		
     size += snprintf(cfg+size, 256, "borders=%02X%02X%02X;\n", config->borders[0], config->borders[1], config->borders[2]);
     size += snprintf(cfg+size, 256, "font1=%02X%02X%02X;\n", config->fntDef[0], config->fntDef[1], config->fntDef[2]);
     size += snprintf(cfg+size, 256, "font2=%02X%02X%02X;\n", config->fntSel[0], config->fntSel[1], config->fntSel[2]);
@@ -270,6 +337,18 @@ void configSave() {
         size += snprintf(cfg+size, 256, "title=%s;\n", config->entries[i].title);
         size += snprintf(cfg+size, 256, "path=%s;\n", config->entries[i].path);
         size += snprintf(cfg+size, 256, "offset=%x;\n", (int)config->entries[i].offset);
+        int patchesCount = config->entries[i].patchesCount;
+        for (int j = 0; j < patchesCount; j++)
+        {
+            binary_patch* curPatch = &config->entries[i].patches[j];
+            size += snprintf(cfg+size, 256, "patchMemSearch=");
+            writeHexDataAsStr(curPatch->memToSearch, curPatch->memToSearchSize, cfg+size);
+            size += curPatch->memToSearchSize*2;
+            size += snprintf(cfg+size, 256, ";\npatchMemOverwrite=");
+            writeHexDataAsStr(curPatch->memOverwrite, curPatch->memOverwriteSize, cfg+size);
+            size += curPatch->memOverwriteSize*2;
+            size += snprintf(cfg+size, 256, ";\npatchOccurence=%i;\n", curPatch->occurence);
+        }
         size += snprintf(cfg+size, 256, "key=%i;\n\n", config->entries[i].key);
     }
 #ifdef ARM9
