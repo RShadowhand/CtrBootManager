@@ -10,7 +10,7 @@ typedef struct {
     u8 *data;
     charDesc_s *desc;
     u8 height;
-    u8 color[3];
+    u8 color[4];
 } font_s;
 
 extern u8 defaultData[];
