@@ -21,7 +21,7 @@
 
 #ifdef ARM9
 
-void waitcycles(uint32_t val);
+void ioDelay(uint32_t val);
 
 #else
 FS_Archive sdmcArchive;
@@ -42,7 +42,7 @@ void svcSleep(u32 millis) {
 #ifndef ARM9
     svcSleepThread(nano);
 #else
-    waitcycles((u32) nano);
+    ioDelay((u32) nano);
 #endif
 }
 
