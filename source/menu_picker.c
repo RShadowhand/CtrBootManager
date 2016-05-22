@@ -244,15 +244,17 @@ void pick_file(file_s *picked, const char *path) {
             int index = picker->file_index;
             if (!picker->files[index].isDir) {
                 const char *ext = get_filename_ext(picker->files[index].name);
+                int noOffsetReq = 1;
 #ifdef ARM9
-                if (strcasecmp(ext, "bin") == 0 || strcasecmp(ext, "dat") == 0) {
+                if (strcasecmp(ext, "bin") == 0 || (noOffsetReq = strcasecmp(ext, "dat")) == 0) {
+                    
 #else
                 if (strcasecmp(ext, "3dsx") == 0) {
 #endif
                     if (confirm(3, "Add entry to boot menu: \"%s\" ?", picker->files[index].name)) {
                         if (config->count > CONFIG_MAX_ENTRIES - 1) {
                             debug("Maximum entries reached (%i)\n", CONFIG_MAX_ENTRIES);
-                        } else if (configAddEntry(picker->files[index].name, picker->files[index].path, 0) == 0) {
+                        } else if (configAddEntry(picker->files[index].name, picker->files[index].path, noOffsetReq?0:0x12000) == 0) {
                             debug("Added entry: %s\n", picker->files[index].name);
                         } else {
                             debug("Error adding entry: %s\n", picker->files[index].name);
