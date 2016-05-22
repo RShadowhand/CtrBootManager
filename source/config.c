@@ -204,6 +204,8 @@ static int handler(void *user, const char *section, const char *name,
 void configThemeInit() {
     config->imgError = true;
     config->imgErrorBot = true;
+    config->bgImgTop[0] = '\0';
+    config->bgImgBot[0] = '\0';
     memcpy(config->bgTop1, (u8[3]) {0x4a, 0x00, 0x31}, sizeof(u8[3]));
     memcpy(config->bgTop2, (u8[3]) {0x6f, 0x01, 0x49}, sizeof(u8[3]));
     memcpy(config->bgBot, (u8[3]) {0x6f, 0x01, 0x49}, sizeof(u8[3]));
@@ -253,7 +255,7 @@ int configInit() {
             }
         }
     }
-
+    
     memcpy(fontDefault.color, config->fntDef, sizeof(u8[4]));
     loadBg(GFX_TOP);
     loadBg(GFX_BOTTOM);
@@ -403,7 +405,7 @@ void loadBg(gfxScreen_t screen) {
 
     const char *path = screen == GFX_TOP ? config->bgImgTop : config->bgImgBot;
     size_t size = fileSize(path);
-    if (!size) {
+    if ( size == -1 || size == 0 ) {
         return;
     }
 
