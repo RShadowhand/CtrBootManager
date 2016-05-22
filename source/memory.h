@@ -7,10 +7,10 @@
 
 #define PTR_TOP_SCREEN          (u8*)(*(u32*)0x23FFFE00)
 #define PTR_BOT_SCREEN          (u8*)(*(u32*)0x23FFFE08)
-#define PTR_TOP_SCREEN_BUF      (u8*)(0x2507E700)
-#define PTR_BOT_SCREEN_BUF      (u8*)(0x250C4A00)
+#define PTR_TOP_SCREEN_BUF      (u8*)(0x2507E900)
+#define PTR_BOT_SCREEN_BUF      (u8*)(0x250C4E00)
 #define PTR_TOP_BG              (u8*)(0x25000000)
-#define PTR_BOT_BG              (u8*)(0x25046300)
+#define PTR_BOT_BG              (u8*)(0x25046500)
 #define PTR_CFG                 (u8*)(0x25200000)
 #define PTR_CFG_TMP             (u8*)(0x25230000)
 #define PTR_PICKER              (u8*)(0x25210000)
