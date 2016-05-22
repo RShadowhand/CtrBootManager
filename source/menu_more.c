@@ -32,8 +32,10 @@ int menu_choose() {
     memset(&picked, 0, sizeof(file_s));
     pick_file(&picked, "/");
 
-    if (strlen(picked.path) > 0) {
-        return load(picked.path, 0, NULL, 0);
+    int pathLength = 0;
+    if ((pathLength = strlen(picked.path)) > 0) {
+        int offset = ( pathLength > 3 && strcasecmp(&picked.path[pathLength-3], "dat") == 0 ) ? 0x12000 : 0;
+        return load(picked.path, offset, NULL, 0);
     }
 
     return -1;
