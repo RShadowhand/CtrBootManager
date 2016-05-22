@@ -33,7 +33,24 @@ int drawCharacter(u8 *fb, font_s *f, char c, s16 x, s16 y, u16 w, u16 h) {
     else if (y + ch > h)ch = h - y;
     fb += (x * h + cy) * 3;
     const u8 r = f->color[0], g = f->color[1], b = f->color[2], a = f->color[3];
-    if ( a < 0xFF )
+    if ( a == 0xFF )
+    {
+        for (i = 0; i < cd->w; i++) {
+            charData += cyo;
+            for (j = 0; j < ch; j++) {
+                u8 v = *(charData++);
+                if (v) {
+                    fb[0] = (fb[0] * (0xFF - v) + (b * v)) >> 8;
+                    fb[1] = (fb[1] * (0xFF - v) + (g * v)) >> 8;
+                    fb[2] = (fb[2] * (0xFF - v) + (r * v)) >> 8;
+                }
+                fb += 3;
+            }
+            charData += (cd->h - (cyo + ch));
+            fb += (h - ch) * 3;
+        }
+    }
+    else if ( a > 0 )
     {
         float alpha = (float)a / 255.f;
         float one_minus_alpha = 1.f - alpha;
@@ -49,23 +66,6 @@ int drawCharacter(u8 *fb, font_s *f, char c, s16 x, s16 y, u16 w, u16 h) {
                     fb[0] = (u8)(alpha*blend[0]+one_minus_alpha*(float)fb[0]);
                     fb[1] = (u8)(alpha*blend[1]+one_minus_alpha*(float)fb[1]);
                     fb[2] = (u8)(alpha*blend[2]+one_minus_alpha*(float)fb[2]);
-                }
-                fb += 3;
-            }
-            charData += (cd->h - (cyo + ch));
-            fb += (h - ch) * 3;
-        }
-    }
-    else if ( a > 0 )
-    {
-        for (i = 0; i < cd->w; i++) {
-            charData += cyo;
-            for (j = 0; j < ch; j++) {
-                u8 v = *(charData++);
-                if (v) {
-                    fb[0] = (fb[0] * (0xFF - v) + (b * v)) >> 8;
-                    fb[1] = (fb[1] * (0xFF - v) + (g * v)) >> 8;
-                    fb[2] = (fb[2] * (0xFF - v) + (r * v)) >> 8;
                 }
                 fb += 3;
             }
