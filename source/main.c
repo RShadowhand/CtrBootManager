@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "config.h"
+#include "anim.h"
 #include "utility.h"
 #include "menu.h"
 
@@ -77,12 +78,15 @@ int main() {
 
     if (!boot_app_enabled) { // fix SOC_Initialize
 #endif
+    animInit();
     if (configInit() != 0 || config->count <= 0) { // recovery
+        animSetup();
         while (aptMainLoop()) {
             if (menu_more() == 0)
                 break;
         }
     } else {
+        animSetup();
         while (aptMainLoop()) {
             if (menu_boot() == 0)
                 break;
