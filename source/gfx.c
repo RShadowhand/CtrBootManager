@@ -13,12 +13,13 @@
 #include <stdarg.h>
 #include "gfx.h"
 #include "text.h"
+#include "anim.h"
 
 #ifdef ARM9
 
 u8 *gfxGetFramebuffer(gfxScreen_t screen, gfx3dSide_t side, u16 *width, u16 *height) {
     if (screen == GFX_TOP) {
-		if (width) *width = 240;
+        if (width) *width = 240;
         if (height) *height = 400;
         return PTR_TOP_SCREEN_BUF;
     } else {
@@ -247,4 +248,5 @@ void gfxSwap() {
     gfxSwapBuffers();
     gspWaitForVBlank();
 #endif
+    incrementAnimTime();
 }
