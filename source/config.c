@@ -43,6 +43,49 @@ void setColorAlpha(u8 *cfgColor, const char *color) {
 	}
 }
 
+int setAnimTimes(int* animTime, int* animStart, char *item)
+{
+    int sep1Ind = 0;
+    while (item[sep1Ind] != ':')
+    {
+        if (item[sep1Ind] == '\0')
+            return -1;
+        sep1Ind++;
+    }
+    
+    item[sep1Ind] = '\0';
+    *animTime = atoi(item);
+
+    item = &item[sep1Ind+1];
+    int sep2Ind = 0;
+    while (item[sep2Ind] != ':')
+        sep2Ind++;
+    
+    if ( item[sep2Ind] == '\0' )
+        sep2Ind = -sep1Ind-3;
+    else
+        item[sep2Ind] = '\0';
+    *animStart = atoi(item);
+
+    return sep1Ind+sep2Ind+2;
+}
+
+void setAnimWithColor(int* animTime, int* animStart, u8 *cfgColor, char *item)
+{
+    int colorInd = setAnimTimes(animTime, animStart, item);
+    if (colorInd < 2)
+        return;
+    setColor(cfgColor, &item[colorInd]);
+}
+
+void setAnimWithColorAlpha(int* animTime, int* animStart, u8 *cfgColor, char *item)
+{
+    int colorInd = setAnimTimes(animTime, animStart, item);
+    if (colorInd < 2)
+        return;
+    setColorAlpha(cfgColor, &item[colorInd]);
+}
+
 void readStrAsHexData(const char *dataAsStr, char *data, int* dataSize) {
     *dataSize = strlen(dataAsStr)/2;
     for (int i = 0; i < *dataSize; i++)
@@ -154,7 +197,26 @@ static int handler(void *user, const char *section, const char *name,
     } else if (MATCH("theme", "bgImgBot")) {
         strncpy(config->bgImgBot, item, 128);
     }
-
+    
+    // theme animation
+    else if (MATCH("theme", "bgTop1Anim")) {
+        setAnimWithColor(&config->bgTop1AnimTime, &config->bgTop1AnimTimeStart, config->bgTop1AnimColor, item);
+    } else if (MATCH("theme", "bgTop2Anim")) {
+        setAnimWithColor(&config->bgTop2AnimTime, &config->bgTop2AnimTimeStart, config->bgTop2AnimColor, item);
+    } else if (MATCH("theme", "bgBottomAnim")) {
+        setAnimWithColor(&config->bgBotAnimTime, &config->bgBotAnimTimeStart, config->bgBotAnimColor, item);
+	} else if (MATCH("theme", "highlightAnim")) {
+        setAnimWithColorAlpha(&config->highlightAnimTime, &config->highlightAnimTimeStart, config->highlightAnimColor, item);
+    } else if (MATCH("theme", "bordersAnim")) {
+        setAnimWithColorAlpha(&config->bordersAnimTime, &config->bordersAnimTimeStart, config->bordersAnimColor, item);
+    } else if (MATCH("theme", "font1Anim")) {
+        setAnimWithColorAlpha(&config->fntDefAnimTime, &config->fntDefAnimTimeStart, config->fntDefAnimColor, item);
+    } else if (MATCH("theme", "font2Anim")) {
+        setAnimWithColorAlpha(&config->fntSelAnimTime, &config->fntSelAnimTimeStart, config->fntSelAnimColor, item);
+    } else if (MATCH("theme", "globalFadeIn")) {
+        setAnimTimes(&config->globalFadeInTime, &config->globalFadeInTimeStart, item);
+    }
+    
     // entries
     else if (MATCH("entry", "title")) {
         strncpy(config->entries[config->count].title, item, 64);
@@ -213,6 +275,15 @@ void configThemeInit() {
     memcpy(config->borders, (u8[4]) {0xff, 0xff, 0xff, 0xff}, sizeof(u8[4]));
     memcpy(config->fntDef, (u8[4]) {0xff, 0xff, 0xff, 0xff}, sizeof(u8[4]));
     memcpy(config->fntSel, (u8[4]) {0x00, 0x00, 0x00, 0xff}, sizeof(u8[4]));
+    config->bgTop1AnimTime = 0;
+    config->bgTop2AnimTime = 0;
+    config->bgBotAnimTime = 0;
+    config->highlightAnimTime = 0;
+    config->bordersAnimTime = 0;
+    config->fntDefAnimTime = 0;
+    config->fntSelAnimTime = 0;
+    config->globalFadeInTime = 0;
+    config->globalFadeInTimeStart = 0;
 }
 
 int configInit() {
@@ -256,7 +327,9 @@ int configInit() {
         }
     }
     
-    memcpy(fontDefault.color, config->fntDef, sizeof(u8[4]));
+    // Fix for fade in effect first frame
+    fontDefault.color[3] = 0x00;
+
     loadBg(GFX_TOP);
     loadBg(GFX_BOTTOM);
 
@@ -322,30 +395,103 @@ void configSave() {
 
     // theme section
     size += snprintf(cfg+size, 256, "[theme];\n");
+    
     size += snprintf(cfg+size, 256, "bgTop1=%02X%02X%02X;\n", config->bgTop1[0], config->bgTop1[1], config->bgTop1[2]);
+    if ( config->bgTop1AnimTime > 0 )
+    {
+        size += snprintf(cfg+size, 256, "bgTop1Anim=%i:%i:%02X%02X%02X;\n", config->bgTop1AnimTime, config->bgTop1AnimTimeStart,
+                config->bgTop1AnimColor[0], config->bgTop1AnimColor[1], config->bgTop1AnimColor[2]);
+    }
+    
     size += snprintf(cfg+size, 256, "bgTop2=%02X%02X%02X;\n", config->bgTop2[0], config->bgTop2[1], config->bgTop2[2]);
+    if ( config->bgTop2AnimTime > 0 )
+    {
+        size += snprintf(cfg+size, 256, "bgTop2Anim=%i:%i:%02X%02X%02X;\n", config->bgTop2AnimTime, config->bgTop2AnimTimeStart,
+                config->bgTop2AnimColor[0], config->bgTop2AnimColor[1], config->bgTop2AnimColor[2]);
+    }
+    
     size += snprintf(cfg+size, 256, "bgBottom=%02X%02X%02X;\n", config->bgBot[0], config->bgBot[1], config->bgBot[2]);
+    if ( config->bgBotAnimTime > 0 )
+    {
+        size += snprintf(cfg+size, 256, "bgBottomAnim=%i:%i:%02X%02X%02X;\n", config->bgBotAnimTime, config->bgBotAnimTimeStart,
+                config->bgBotAnimColor[0], config->bgBotAnimColor[1], config->bgBotAnimColor[2]);
+    }
     
     if ( config->highlight[3] < 0xFF )
         size += snprintf(cfg+size, 256, "highlight=%02X%02X%02X%02X;\n", config->highlight[0], config->highlight[1], config->highlight[2], config->highlight[3]);
     else
         size += snprintf(cfg+size, 256, "highlight=%02X%02X%02X;\n", config->highlight[0], config->highlight[1], config->highlight[2]);
+    if ( config->highlightAnimTime > 0 )
+    {
+        if ( config->highlightAnimColor[3] < 0xFF )
+        {
+            size += snprintf(cfg+size, 256, "highlightAnim=%i:%i:%02X%02X%02X%02X;\n", config->highlightAnimTime, config->highlightAnimTimeStart,
+                    config->highlightAnimColor[0], config->highlightAnimColor[1], config->highlightAnimColor[2], config->highlightAnimColor[3]);
+        }
+        else
+        {
+            size += snprintf(cfg+size, 256, "highlightAnim=%i:%i:%02X%02X%02X;\n", config->highlightAnimTime, config->highlightAnimTimeStart,
+                    config->highlightAnimColor[0], config->highlightAnimColor[1], config->highlightAnimColor[2]);
+        }
+    }
     
     if ( config->borders[3] < 0xFF )
         size += snprintf(cfg+size, 256, "borders=%02X%02X%02X%02X;\n", config->borders[0], config->borders[1], config->borders[2], config->borders[3]);
     else
         size += snprintf(cfg+size, 256, "borders=%02X%02X%02X;\n", config->borders[0], config->borders[1], config->borders[2]);
+    if ( config->bordersAnimTime > 0 )
+    {
+        if ( config->highlightAnimColor[3] < 0xFF )
+        {
+            size += snprintf(cfg+size, 256, "bordersAnim=%i:%i:%02X%02X%02X%02X;\n", config->bordersAnimTime, config->bordersAnimTimeStart,
+                    config->bordersAnimColor[0], config->bordersAnimColor[1], config->bordersAnimColor[2], config->bordersAnimColor[3]);
+        }
+        else
+        {
+            size += snprintf(cfg+size, 256, "bordersAnim=%i:%i:%02X%02X%02X;\n", config->bordersAnimTime, config->bordersAnimTimeStart,
+                    config->bordersAnimColor[0], config->bordersAnimColor[1], config->bordersAnimColor[2]);
+        }
+    }
     
     if ( config->fntDef[3] < 0xFF )
         size += snprintf(cfg+size, 256, "font1=%02X%02X%02X%02X;\n", config->fntDef[0], config->fntDef[1], config->fntDef[2], config->fntDef[3]);
     else
         size += snprintf(cfg+size, 256, "font1=%02X%02X%02X;\n", config->fntDef[0], config->fntDef[1], config->fntDef[2]);
+    if ( config->fntDefAnimTime > 0 )
+    {
+        if ( config->fntDefAnimColor[3] < 0xFF )
+        {
+            size += snprintf(cfg+size, 256, "font1Anim=%i:%i:%02X%02X%02X%02X;\n", config->fntDefAnimTime, config->fntDefAnimTimeStart,
+                    config->fntDefAnimColor[0], config->fntDefAnimColor[1], config->fntDefAnimColor[2], config->fntDefAnimColor[3]);
+        }
+        else
+        {
+            size += snprintf(cfg+size, 256, "font1Anim=%i:%i:%02X%02X%02X;\n", config->fntDefAnimTime, config->fntDefAnimTimeStart,
+                    config->fntDefAnimColor[0], config->fntDefAnimColor[1], config->fntDefAnimColor[2]);
+        }
+    }
     
     if ( config->fntSel[3] < 0xFF )
         size += snprintf(cfg+size, 256, "font2=%02X%02X%02X%02X;\n", config->fntSel[0], config->fntSel[1], config->fntSel[2], config->fntSel[3]);
     else
         size += snprintf(cfg+size, 256, "font2=%02X%02X%02X;\n", config->fntSel[0], config->fntSel[1], config->fntSel[2]);
+    if ( config->fntSelAnimTime > 0 )
+    {
+        if ( config->fntDefAnimColor[3] < 0xFF )
+        {
+            size += snprintf(cfg+size, 256, "font2Anim=%i:%i:%02X%02X%02X%02X;\n", config->fntSelAnimTime, config->fntSelAnimTimeStart,
+                    config->fntSelAnimColor[0], config->fntSelAnimColor[1], config->fntSelAnimColor[2], config->fntSelAnimColor[3]);
+        }
+        else
+        {
+            size += snprintf(cfg+size, 256, "font2Anim=%i:%i:%02X%02X%02X;\n", config->fntDefAnimTime, config->fntSelAnimTimeStart,
+                    config->fntSelAnimColor[0], config->fntSelAnimColor[1], config->fntSelAnimColor[2]);
+        }
+    }
     
+    if ( config->globalFadeInTime > 0 )
+        size += snprintf(cfg+size, 256, "globalFadeIn=%i:%i;\n", config->globalFadeInTime, config->globalFadeInTimeStart);
+
     size += snprintf(cfg+size, 256, "bgImgTop=%s;\n", config->bgImgTop);
     size += snprintf(cfg+size, 256, "bgImgBot=%s;\n\n", config->bgImgBot);
 
