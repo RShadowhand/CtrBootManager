@@ -40,6 +40,7 @@ typedef struct {
     int recovery;
     int count;
     boot_entry_s entries[CONFIG_MAX_ENTRIES];
+    
     u8 bgTop1[3];
     u8 bgTop2[3];
     u8 bgBot[3];
@@ -47,6 +48,34 @@ typedef struct {
     u8 borders[4];
     u8 fntDef[4];
     u8 fntSel[4];
+    
+    u8 bgTop1AnimColor[3];
+    u8 bgTop2AnimColor[3];
+    u8 bgBotAnimColor[3];
+    u8 highlightAnimColor[4];
+    u8 bordersAnimColor[4];
+    u8 fntDefAnimColor[4];
+    u8 fntSelAnimColor[4];
+    
+    int bgTop1AnimTime;
+    int bgTop2AnimTime;
+    int bgBotAnimTime;
+    int highlightAnimTime;
+    int bordersAnimTime;
+    int fntDefAnimTime;
+    int fntSelAnimTime;
+
+    int bgTop1AnimTimeStart;
+    int bgTop2AnimTimeStart;
+    int bgBotAnimTimeStart;
+    int highlightAnimTimeStart;
+    int bordersAnimTimeStart;
+    int fntDefAnimTimeStart;
+    int fntSelAnimTimeStart;
+    
+    int globalFadeInTime;
+    int globalFadeInTimeStart;
+
     char bgImgTop[128];
     char bgImgBot[128];
     bool imgError;
