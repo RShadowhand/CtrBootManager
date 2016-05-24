@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "gfx.h"
+#include "anim.h"
 #include "config.h"
 #include "menu.h"
 
@@ -15,15 +16,15 @@ void drawBg() {
         memcpy(gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL), config->bgImgTopBuff,
                (size_t) config->bgImgTopSize);
     } else {
-        gfxClearTop(config->bgTop1, config->bgTop2);
+        gfxClearTop(anim->bgTop1, anim->bgTop2);
     }
     if (!config->imgErrorBot) {
         memcpy(gfxGetFramebuffer(GFX_BOTTOM, GFX_LEFT, NULL, NULL), config->bgImgBotBuff,
                (size_t) config->bgImgBotSize);
     } else {
-        gfxClearBot(config->bgBot);
+        gfxClearBot(anim->bgBot);
     }
-    drawRectColor(GFX_TOP, GFX_LEFT, MENU_MIN_X, MENU_MIN_Y - 20, MENU_MAX_X, MENU_MAX_Y, config->borders);
+    drawRectColor(GFX_TOP, GFX_LEFT, MENU_MIN_X, MENU_MIN_Y - 20, MENU_MAX_X, MENU_MAX_Y, anim->borders);
 }
 
 void drawTitle(const char *format, ...) {
@@ -46,13 +47,13 @@ void drawItem(bool selected, int y, const char *format, ...) {
     va_end(argp);
 
     if (selected) {
-        gfxDrawRectangle(GFX_TOP, GFX_LEFT, config->highlight, (s16) (MENU_MIN_X + 4), (s16) (y + MENU_MIN_Y), 361, 15);
+        gfxDrawRectangle(GFX_TOP, GFX_LEFT, anim->highlight, (s16) (MENU_MIN_X + 4), (s16) (y + MENU_MIN_Y), 361, 15);
     }
-    memcpy(fontDefault.color, selected ? config->fntSel : config->fntDef, sizeof(u8[4]));
+    memcpy(fontDefault.color, selected ? anim->fntSel : anim->fntDef, sizeof(u8[4]));
     gfxDrawText(GFX_TOP, GFX_LEFT, &fontDefault, msg, (s16) (MENU_MIN_X + 6),
                 (s16) y + (s16) MENU_MIN_Y);
 
-    memcpy(fontDefault.color, config->fntDef, sizeof(u8[4]));
+    memcpy(fontDefault.color, anim->fntDef, sizeof(u8[4]));
 }
 
 void drawItemN(bool selected, int maxChar, int y, const char *format, ...) {
@@ -64,13 +65,13 @@ void drawItemN(bool selected, int maxChar, int y, const char *format, ...) {
     va_end(argp);
 
     if (selected) {
-        gfxDrawRectangle(GFX_TOP, GFX_LEFT, config->highlight, (s16) (MENU_MIN_X + 4), (s16) (y + MENU_MIN_Y), 361, 15);
+        gfxDrawRectangle(GFX_TOP, GFX_LEFT, anim->highlight, (s16) (MENU_MIN_X + 4), (s16) (y + MENU_MIN_Y), 361, 15);
     }
-    memcpy(fontDefault.color, selected ? config->fntSel : config->fntDef, sizeof(u8[4]));
+    memcpy(fontDefault.color, selected ? anim->fntSel : anim->fntDef, sizeof(u8[4]));
     gfxDrawTextN(GFX_TOP, GFX_LEFT, &fontDefault, msg, maxChar, (s16) (MENU_MIN_X + 6),
                  (s16) y + (s16) MENU_MIN_Y);
 
-    memcpy(fontDefault.color, config->fntDef, sizeof(u8[4]));
+    memcpy(fontDefault.color, anim->fntDef, sizeof(u8[4]));
 }
 
 void drawInfo(const char *format, ...) {
