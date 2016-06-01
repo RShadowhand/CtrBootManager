@@ -73,8 +73,8 @@ typedef struct {
     int fntDefAnimTimeStart;
     int fntSelAnimTimeStart;
     
-    int globalFadeInTime;
-    int globalFadeInTimeStart;
+    int menuFadeInTime;
+    int menuFadeInTimeStart;
 
     char bgImgTop[128];
     char bgImgBot[128];
