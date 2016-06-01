@@ -60,6 +60,12 @@ int menu_more() {
             if (menu_index < 0)
                 menu_index = MENU_COUNT - 1;
         }
+        else if (kDown & KEY_RIGHT) {
+            menu_index = (menu_index == MENU_COUNT - 1) ? 0 : (MENU_COUNT - 1);
+        }
+        else if (kDown & KEY_LEFT) {
+            menu_index = (menu_index == 0) ?  (MENU_COUNT - 1) : 0;
+        }
         else if (kDown & KEY_A) {
             if (menu_index == 0 && menu_choose() == 0) {
                 return 0;
