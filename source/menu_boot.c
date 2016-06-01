@@ -106,6 +106,14 @@ int menu_boot() {
             if (boot_index < 0)
                 boot_index = config->count;
         }
+        if (kDown & KEY_RIGHT) {
+            timer = false;
+            boot_index = (boot_index == config->count) ? 0 : config->count;
+        }
+        else if (kDown & KEY_LEFT) {
+            timer = false;
+            boot_index = (boot_index == 0) ? config->count : 0;
+        }
         else if (kDown & KEY_A) {
             timer = false;
             if (boot_index == config->count) {
