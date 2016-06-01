@@ -173,9 +173,12 @@ static int handler(void *user, const char *section, const char *name,
         config->recovery = atoi(item);
     } else if (MATCH("general", "default")) {
         config->index = atoi(item);
-    } else if (MATCH("general", "autobootfix")) {
+    }
+#ifndef ARM9
+    else if (MATCH("general", "autobootfix")) {
         config->autobootfix = atoi(item);
     }
+#endif
 
     // theme
     else if (MATCH("theme", "bgTop1")) {
@@ -198,69 +201,80 @@ static int handler(void *user, const char *section, const char *name,
         strncpy(config->bgImgBot, item, 128);
     }
     
-    // theme animation
-    else if (MATCH("theme", "bgTop1Anim")) {
+    // animation
+    else if (MATCH("animation", "bgTop1Anim")) {
         setAnimWithColor(&config->bgTop1AnimTime, &config->bgTop1AnimTimeStart, config->bgTop1AnimColor, item);
-    } else if (MATCH("theme", "bgTop2Anim")) {
+    } else if (MATCH("animation", "bgTop2Anim")) {
         setAnimWithColor(&config->bgTop2AnimTime, &config->bgTop2AnimTimeStart, config->bgTop2AnimColor, item);
-    } else if (MATCH("theme", "bgBottomAnim")) {
+    } else if (MATCH("animation", "bgBottomAnim")) {
         setAnimWithColor(&config->bgBotAnimTime, &config->bgBotAnimTimeStart, config->bgBotAnimColor, item);
-	} else if (MATCH("theme", "highlightAnim")) {
+	} else if (MATCH("animation", "highlightAnim")) {
         setAnimWithColorAlpha(&config->highlightAnimTime, &config->highlightAnimTimeStart, config->highlightAnimColor, item);
-    } else if (MATCH("theme", "bordersAnim")) {
+    } else if (MATCH("animation", "bordersAnim")) {
         setAnimWithColorAlpha(&config->bordersAnimTime, &config->bordersAnimTimeStart, config->bordersAnimColor, item);
-    } else if (MATCH("theme", "font1Anim")) {
+    } else if (MATCH("animation", "font1Anim")) {
         setAnimWithColorAlpha(&config->fntDefAnimTime, &config->fntDefAnimTimeStart, config->fntDefAnimColor, item);
-    } else if (MATCH("theme", "font2Anim")) {
+    } else if (MATCH("animation", "font2Anim")) {
         setAnimWithColorAlpha(&config->fntSelAnimTime, &config->fntSelAnimTimeStart, config->fntSelAnimColor, item);
-    } else if (MATCH("theme", "globalFadeIn")) {
-        setAnimTimes(&config->globalFadeInTime, &config->globalFadeInTimeStart, item);
+    } else if (MATCH("animation", "menuFadeIn")) {
+        setAnimTimes(&config->menuFadeInTime, &config->menuFadeInTimeStart, item);
     }
     
     // entries
-    else if (MATCH("entry", "title")) {
-        strncpy(config->entries[config->count].title, item, 64);
-    } else if (MATCH("entry", "path")) {
-        strncpy(config->entries[config->count].path, item, 128);
-    } else if (MATCH("entry", "offset")) {
-        config->entries[config->count].offset = strtoul(item, NULL, 16);
-    }
-    // Binary patches for current entry
-    else if (MATCH("entry", "patchMemSearch")) {
-        binary_patch* curPatch = &config->entries[config->count].patches[config->entries[config->count].patchesCount];
-        readStrAsHexData(item, curPatch->memToSearch, &curPatch->memToSearchSize);
-    } else if (MATCH("entry", "patchMemOverwrite")) {
-        binary_patch* curPatch = &config->entries[config->count].patches[config->entries[config->count].patchesCount];
-        readStrAsHexData(item, curPatch->memOverwrite, &curPatch->memOverwriteSize);
-    } else if (MATCH("entry", "patchMemOverwriteStr")) {
-        binary_patch* curPatch = &config->entries[config->count].patches[config->entries[config->count].patchesCount];
-        curPatch->memOverwriteSize = strlen(item)+1;
-        memcpy(curPatch->memOverwrite, item, curPatch->memOverwriteSize);
-    } else if (MATCH("entry", "patchMemOverwriteWStr")) {
-        binary_patch* curPatch = &config->entries[config->count].patches[config->entries[config->count].patchesCount];
-        int strSize = strlen(item)+1;
-        curPatch->memOverwriteSize = strSize*2;
-        for (int i = 0; i < strSize; i++)
-        {
-            curPatch->memOverwrite[2*i] = item[i];
-            curPatch->memOverwrite[2*i+1] = '\0';
-        }
-    } else if (MATCH("entry", "patchOccurence")) {
-        int prevPatchesCount = config->entries[config->count].patchesCount;
-        config->entries[config->count].patches[prevPatchesCount].occurence = atoi(item);
-        config->entries[config->count].patchesCount = (prevPatchesCount < PATCHES_MAX_PER_ENTRY) ? (prevPatchesCount+1) : prevPatchesCount;
-    }
-    // End current entry 
-    else if (MATCH("entry", "key")) {
-        if(strlen(config->entries[config->count].title) > 0) {
-            config->entries[config->count].key = atoi(item);
-            config->count++;
-        }
-    }
     else {
-        return 0;
+        int entryInd = config->count;
+        if ( entryInd < CONFIG_MAX_ENTRIES )
+        {
+            if (MATCH("entry", "title")) {
+                strncpy(config->entries[entryInd].title, item, 64);
+            } else if (MATCH("entry", "path")) {
+                strncpy(config->entries[entryInd].path, item, 128);
+            } else if (MATCH("entry", "offset")) {
+                config->entries[entryInd].offset = strtoul(item, NULL, 16);
+            }
+            // End current entry
+            else if (MATCH("entry", "key")) {
+                if(strlen(config->entries[entryInd].title) > 0) {
+                    config->entries[entryInd].key = atoi(item);
+                    config->count++;
+                }
+            }
+        #ifdef ARM9
+            else
+            {
+                int patchInd = config->entries[entryInd].patchesCount;
+                if ( patchInd < PATCHES_MAX_PER_ENTRY )
+                {
+                    // Binary patches for current entry
+                    if (MATCH("entry", "patchMemSearch")) {
+                        binary_patch* curPatch = &config->entries[entryInd].patches[patchInd];
+                        readStrAsHexData(item, curPatch->memToSearch, &curPatch->memToSearchSize);
+                    } else if (MATCH("entry", "patchMemOverwrite")) {
+                        binary_patch* curPatch = &config->entries[entryInd].patches[patchInd];
+                        readStrAsHexData(item, curPatch->memOverwrite, &curPatch->memOverwriteSize);
+                    } else if (MATCH("entry", "patchMemOverwriteStr")) {
+                        binary_patch* curPatch = &config->entries[entryInd].patches[patchInd];
+                        curPatch->memOverwriteSize = strlen(item)+1;
+                        memcpy(curPatch->memOverwrite, item, curPatch->memOverwriteSize);
+                    } else if (MATCH("entry", "patchMemOverwriteWStr")) {
+                        binary_patch* curPatch = &config->entries[entryInd].patches[patchInd];
+                        int strSize = strlen(item)+1;
+                        curPatch->memOverwriteSize = strSize*2;
+                        for (int i = 0; i < strSize; i++)
+                        {
+                            curPatch->memOverwrite[2*i] = item[i];
+                            curPatch->memOverwrite[2*i+1] = '\0';
+                        }
+                    } else if (MATCH("entry", "patchOccurence")) {
+                        config->entries[entryInd].patches[patchInd].occurence = atoi(item);
+                        config->entries[entryInd].patchesCount++;
+                    }
+                }
+            }
+        #endif
+        }
     }
-    return 1;
+    return 0;
 }
 
 void configThemeInit() {
@@ -282,8 +296,8 @@ void configThemeInit() {
     config->bordersAnimTime = 0;
     config->fntDefAnimTime = 0;
     config->fntSelAnimTime = 0;
-    config->globalFadeInTime = 0;
-    config->globalFadeInTimeStart = 0;
+    config->menuFadeInTime = 0;
+    config->menuFadeInTimeStart = 0;
 }
 
 int configInit() {
@@ -395,32 +409,46 @@ void configSave() {
 
     // theme section
     size += snprintf(cfg+size, 256, "[theme];\n");
-    
     size += snprintf(cfg+size, 256, "bgTop1=%02X%02X%02X;\n", config->bgTop1[0], config->bgTop1[1], config->bgTop1[2]);
+    size += snprintf(cfg+size, 256, "bgTop2=%02X%02X%02X;\n", config->bgTop2[0], config->bgTop2[1], config->bgTop2[2]);
+    size += snprintf(cfg+size, 256, "bgBottom=%02X%02X%02X;\n", config->bgBot[0], config->bgBot[1], config->bgBot[2]);
+    if ( config->highlight[3] < 0xFF )
+        size += snprintf(cfg+size, 256, "highlight=%02X%02X%02X%02X;\n", config->highlight[0], config->highlight[1], config->highlight[2], config->highlight[3]);
+    else
+        size += snprintf(cfg+size, 256, "highlight=%02X%02X%02X;\n", config->highlight[0], config->highlight[1], config->highlight[2]);
+    if ( config->borders[3] < 0xFF )
+        size += snprintf(cfg+size, 256, "borders=%02X%02X%02X%02X;\n", config->borders[0], config->borders[1], config->borders[2], config->borders[3]);
+    else
+        size += snprintf(cfg+size, 256, "borders=%02X%02X%02X;\n", config->borders[0], config->borders[1], config->borders[2]);
+    if ( config->fntDef[3] < 0xFF )
+        size += snprintf(cfg+size, 256, "font1=%02X%02X%02X%02X;\n", config->fntDef[0], config->fntDef[1], config->fntDef[2], config->fntDef[3]);
+    else
+        size += snprintf(cfg+size, 256, "font1=%02X%02X%02X;\n", config->fntDef[0], config->fntDef[1], config->fntDef[2]);
+    
+    if ( config->fntSel[3] < 0xFF )
+        size += snprintf(cfg+size, 256, "font2=%02X%02X%02X%02X;\n", config->fntSel[0], config->fntSel[1], config->fntSel[2], config->fntSel[3]);
+    else
+        size += snprintf(cfg+size, 256, "font2=%02X%02X%02X;\n", config->fntSel[0], config->fntSel[1], config->fntSel[2]);
+    size += snprintf(cfg+size, 256, "bgImgTop=%s;\n", config->bgImgTop);
+    size += snprintf(cfg+size, 256, "bgImgBot=%s;\n\n", config->bgImgBot);
+
+    // animation section
+    size += snprintf(cfg+size, 256, "[animation];\n");
     if ( config->bgTop1AnimTime > 0 )
     {
         size += snprintf(cfg+size, 256, "bgTop1Anim=%i:%i:%02X%02X%02X;\n", config->bgTop1AnimTime, config->bgTop1AnimTimeStart,
                 config->bgTop1AnimColor[0], config->bgTop1AnimColor[1], config->bgTop1AnimColor[2]);
     }
-    
-    size += snprintf(cfg+size, 256, "bgTop2=%02X%02X%02X;\n", config->bgTop2[0], config->bgTop2[1], config->bgTop2[2]);
     if ( config->bgTop2AnimTime > 0 )
     {
         size += snprintf(cfg+size, 256, "bgTop2Anim=%i:%i:%02X%02X%02X;\n", config->bgTop2AnimTime, config->bgTop2AnimTimeStart,
                 config->bgTop2AnimColor[0], config->bgTop2AnimColor[1], config->bgTop2AnimColor[2]);
     }
-    
-    size += snprintf(cfg+size, 256, "bgBottom=%02X%02X%02X;\n", config->bgBot[0], config->bgBot[1], config->bgBot[2]);
     if ( config->bgBotAnimTime > 0 )
     {
         size += snprintf(cfg+size, 256, "bgBottomAnim=%i:%i:%02X%02X%02X;\n", config->bgBotAnimTime, config->bgBotAnimTimeStart,
                 config->bgBotAnimColor[0], config->bgBotAnimColor[1], config->bgBotAnimColor[2]);
     }
-    
-    if ( config->highlight[3] < 0xFF )
-        size += snprintf(cfg+size, 256, "highlight=%02X%02X%02X%02X;\n", config->highlight[0], config->highlight[1], config->highlight[2], config->highlight[3]);
-    else
-        size += snprintf(cfg+size, 256, "highlight=%02X%02X%02X;\n", config->highlight[0], config->highlight[1], config->highlight[2]);
     if ( config->highlightAnimTime > 0 )
     {
         if ( config->highlightAnimColor[3] < 0xFF )
@@ -434,11 +462,6 @@ void configSave() {
                     config->highlightAnimColor[0], config->highlightAnimColor[1], config->highlightAnimColor[2]);
         }
     }
-    
-    if ( config->borders[3] < 0xFF )
-        size += snprintf(cfg+size, 256, "borders=%02X%02X%02X%02X;\n", config->borders[0], config->borders[1], config->borders[2], config->borders[3]);
-    else
-        size += snprintf(cfg+size, 256, "borders=%02X%02X%02X;\n", config->borders[0], config->borders[1], config->borders[2]);
     if ( config->bordersAnimTime > 0 )
     {
         if ( config->highlightAnimColor[3] < 0xFF )
@@ -452,11 +475,6 @@ void configSave() {
                     config->bordersAnimColor[0], config->bordersAnimColor[1], config->bordersAnimColor[2]);
         }
     }
-    
-    if ( config->fntDef[3] < 0xFF )
-        size += snprintf(cfg+size, 256, "font1=%02X%02X%02X%02X;\n", config->fntDef[0], config->fntDef[1], config->fntDef[2], config->fntDef[3]);
-    else
-        size += snprintf(cfg+size, 256, "font1=%02X%02X%02X;\n", config->fntDef[0], config->fntDef[1], config->fntDef[2]);
     if ( config->fntDefAnimTime > 0 )
     {
         if ( config->fntDefAnimColor[3] < 0xFF )
@@ -470,11 +488,6 @@ void configSave() {
                     config->fntDefAnimColor[0], config->fntDefAnimColor[1], config->fntDefAnimColor[2]);
         }
     }
-    
-    if ( config->fntSel[3] < 0xFF )
-        size += snprintf(cfg+size, 256, "font2=%02X%02X%02X%02X;\n", config->fntSel[0], config->fntSel[1], config->fntSel[2], config->fntSel[3]);
-    else
-        size += snprintf(cfg+size, 256, "font2=%02X%02X%02X;\n", config->fntSel[0], config->fntSel[1], config->fntSel[2]);
     if ( config->fntSelAnimTime > 0 )
     {
         if ( config->fntDefAnimColor[3] < 0xFF )
@@ -488,19 +501,17 @@ void configSave() {
                     config->fntSelAnimColor[0], config->fntSelAnimColor[1], config->fntSelAnimColor[2]);
         }
     }
+    if ( config->menuFadeInTime > 0 )
+        size += snprintf(cfg+size, 256, "menuFadeIn=%i:%i;\n", config->menuFadeInTime, config->menuFadeInTimeStart);
     
-    if ( config->globalFadeInTime > 0 )
-        size += snprintf(cfg+size, 256, "globalFadeIn=%i:%i;\n", config->globalFadeInTime, config->globalFadeInTimeStart);
-
-    size += snprintf(cfg+size, 256, "bgImgTop=%s;\n", config->bgImgTop);
-    size += snprintf(cfg+size, 256, "bgImgBot=%s;\n\n", config->bgImgBot);
-
+    // entries section
     for(i=0; i<config->count; i++) {
-        size += snprintf(cfg+size, 256, "[entry];\n");
+        size += snprintf(cfg+size, 256, "\n[entry];\n");
         size += snprintf(cfg+size, 256, "title=%s;\n", config->entries[i].title);
         size += snprintf(cfg+size, 256, "path=%s;\n", config->entries[i].path);
         size += snprintf(cfg+size, 256, "offset=%x;\n", (int)config->entries[i].offset);
         int patchesCount = config->entries[i].patchesCount;
+    #ifdef ARM9
         for (int j = 0; j < patchesCount; j++)
         {
             binary_patch* curPatch = &config->entries[i].patches[j];
@@ -512,7 +523,8 @@ void configSave() {
             size += curPatch->memOverwriteSize*2;
             size += snprintf(cfg+size, 256, ";\npatchOccurence=%i;\n", curPatch->occurence);
         }
-        size += snprintf(cfg+size, 256, "key=%i;\n\n", config->entries[i].key);
+    #endif
+        size += snprintf(cfg+size, 256, "key=%i;\n", config->entries[i].key);
     }
 #ifdef ARM9
     FIL file;
