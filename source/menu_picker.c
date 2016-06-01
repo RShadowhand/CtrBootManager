@@ -184,42 +184,42 @@ void pick_file(file_s *picked, const char *path) {
             time(&t_start); // reset held timer
         }
 #endif
-        if (kDown & KEY_DOWN) {
-            picker->file_index++;
+        if (kDown & KEY_DOWN || kDown & KEY_RIGHT) {
+            picker->file_index += (kDown & KEY_DOWN) ? 1 : MAX_LINE;
             if (picker->file_index >= picker->file_count)
-                picker->file_index = 0;
+                picker->file_index = (kDown & KEY_DOWN || picker->file_index == picker->file_count - 1 + MAX_LINE) ? 0 : (picker->file_count - 1);
 #ifndef ARM9
             time(&t_start);
 #endif
-        } else if (kHeld & KEY_DOWN) {
+        } else if (kHeld & KEY_DOWN || kHeld & KEY_RIGHT) {
 #ifndef ARM9
             time(&t_end);
 #endif
             t_elapsed = t_end - t_start;
             if (t_elapsed > 0) {
-                picker->file_index++;
+                picker->file_index += (kDown & KEY_DOWN) ? 1 : MAX_LINE;
                 if (picker->file_index >= picker->file_count)
-                    picker->file_index = 0;
+                    picker->file_index = (kDown & KEY_DOWN || picker->file_index == picker->file_count - 1 + MAX_LINE) ? 0 : (picker->file_count - 1);
                 svcSleep(100);
             }
         }
 
-        if (kDown & KEY_UP) {
-            picker->file_index--;
+        if (kDown & KEY_UP || kDown & KEY_LEFT) {
+            picker->file_index -= (kDown & KEY_UP) ? 1 : MAX_LINE;
             if (picker->file_index < 0)
-                picker->file_index = picker->file_count - 1;
+                picker->file_index = (kDown & KEY_UP || picker->file_index == -MAX_LINE) ? (picker->file_count - 1) : 0;
 #ifndef ARM9
             time(&t_start);
 #endif
-        } else if (kHeld & KEY_UP) {
+        } else if (kHeld & KEY_UP || kDown & KEY_LEFT) {
 #ifndef ARM9
             time(&t_end);
 #endif
             t_elapsed = t_end - t_start;
             if (t_elapsed > 0) {
-                picker->file_index--;
+                picker->file_index -= (kDown & KEY_UP) ? 1 : MAX_LINE;
                 if (picker->file_index < 0)
-                    picker->file_index = picker->file_count - 1;
+                    picker->file_index = (kDown & KEY_UP || picker->file_index == -MAX_LINE) ? (picker->file_count - 1) : 0;
                 svcSleep(100);
             }
         }
