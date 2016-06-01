@@ -29,7 +29,7 @@ void animSetup()
     if ( config->bgTop1AnimTime > 0 || config->bgTop2AnimTime > 0 || config->bgBotAnimTime > 0
       || config->highlightAnimTime > 0 || config->bordersAnimTime > 0
       || config->fntDefAnimTime > 0 || config->fntSelAnimTime > 0
-      || config->globalFadeInTime > 0 || config->globalFadeInTimeStart != 0 )
+      || config->menuFadeInTime > 0 || config->menuFadeInTimeStart != 0 )
     {
         anim->active = 1;
         incrementAnimTime();
@@ -88,7 +88,7 @@ void incrementAnimTime()
         float merge = computeMerge(anim->timer, config->highlightAnimTime, config->highlightAnimTimeStart);
         setMergedColorAlpha(merge, config->highlight, config->highlightAnimColor, anim->highlight);
     }
-    else if ( anim->timer > config->globalFadeInTimeStart )
+    else if ( anim->timer > config->menuFadeInTimeStart )
         memcpy(anim->highlight, config->highlight, sizeof(u8[4]));
 
     if ( config->bordersAnimTime > 0 )
@@ -96,7 +96,7 @@ void incrementAnimTime()
         float merge = computeMerge(anim->timer, config->bordersAnimTime, config->bordersAnimTimeStart);
         setMergedColorAlpha(merge, config->borders, config->bordersAnimColor, anim->borders);
     }
-    else if ( anim->timer > config->globalFadeInTimeStart )
+    else if ( anim->timer > config->menuFadeInTimeStart )
         memcpy(anim->borders, config->borders, sizeof(u8[4]));
     
     if ( config->fntDefAnimTime > 0 )
@@ -104,7 +104,7 @@ void incrementAnimTime()
         float merge = computeMerge(anim->timer, config->fntDefAnimTime, config->fntDefAnimTimeStart);
         setMergedColorAlpha(merge, config->fntDef, config->fntDefAnimColor, anim->fntDef);
     }
-    else if ( anim->timer > config->globalFadeInTimeStart )
+    else if ( anim->timer > config->menuFadeInTimeStart )
         memcpy(anim->fntDef, config->fntDef, sizeof(u8[4]));
 
     if ( config->fntSelAnimTime > 0 )
@@ -112,22 +112,22 @@ void incrementAnimTime()
         float merge = computeMerge(anim->timer, config->fntSelAnimTime, config->fntSelAnimTimeStart);
         setMergedColorAlpha(merge, config->fntSel, config->fntSelAnimColor, anim->fntSel);
     }
-    else if ( anim->timer > config->globalFadeInTimeStart )
+    else if ( anim->timer > config->menuFadeInTimeStart )
         memcpy(anim->fntSel, config->fntSel, sizeof(u8[4]));
     
-    if ( anim->timer >= config->globalFadeInTimeStart )
+    if ( anim->timer >= config->menuFadeInTimeStart )
     {
-        int fadeInTime = anim->timer - config->globalFadeInTimeStart;
-        if ( fadeInTime <= config->globalFadeInTime )
+        int fadeInTime = anim->timer - config->menuFadeInTimeStart;
+        if ( fadeInTime <= config->menuFadeInTime )
         {
-            float fadeIn = (config->globalFadeInTime > 0) ? (float)fadeInTime / (float)config->globalFadeInTime : 1.f;
+            float fadeIn = (config->menuFadeInTime > 0) ? (float)fadeInTime / (float)config->menuFadeInTime : 1.f;
             
             anim->highlight[3] = (u8)(fadeIn*(float)anim->highlight[3]);
             anim->borders[3] = (u8)(fadeIn*(float)anim->borders[3]);
             anim->fntDef[3] = (u8)(fadeIn*(float)anim->fntDef[3]);
             anim->fntSel[3] = (u8)(fadeIn*(float)anim->fntSel[3]);
             
-            if ( fadeInTime == config->globalFadeInTime && config->bgTop1AnimTime == 0
+            if ( fadeInTime == config->menuFadeInTime && config->bgTop1AnimTime == 0
               && config->bgTop2AnimTime == 0 && config->bgBotAnimTime == 0
               && config->highlightAnimTime == 0 && config->bordersAnimTime == 0
               && config->fntDefAnimTime == 0 && config->fntSelAnimTime == 0 )
