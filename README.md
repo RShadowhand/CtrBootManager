@@ -26,6 +26,7 @@ Binaries should now be in the `build` folder.
  * Fluto : graphics
  * Arkhandar : graphics
  * dotjasp : graphics (regionfree icon)
+
 ###For screeninit:
  * Aurora Wright
  * dark_samus
@@ -33,6 +34,7 @@ Binaries should now be in the `build` folder.
  * Normmatt
  * delebile 
  * tiniVi
+
 ###For movies support:
  * Wolfvak
  * d0k3 : compressed movies
