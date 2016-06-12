@@ -43,6 +43,7 @@ void __appExit() {
     gfxExit();
     netloader_exit();
     configExit();
+    animExit();
     amExit();
     ptmuExit();
     acExit();
