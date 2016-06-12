@@ -27,7 +27,7 @@ Binaries should now be in the `build` folder.
  * Arkhandar : graphics
  * dotjasp : graphics (regionfree icon)
 
-###For screeninit:
+###For screeninit code:
  * Aurora Wright
  * dark_samus
  * bil1s
@@ -35,7 +35,7 @@ Binaries should now be in the `build` folder.
  * delebile 
  * tiniVi
 
-###For movies support:
+###For movies support code example:
  * Wolfvak
  * d0k3 : compressed movies
 
