@@ -12,17 +12,23 @@
 #include "menu.h"
 
 void drawBg() {
-    if (!config->imgError) {
-        memcpy(gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL), config->bgImgTopBuff,
-               (size_t) config->bgImgTopSize);
-    } else {
-        gfxClearTop(anim->bgTop1, anim->bgTop2);
+    u8* fbTop = gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL);
+    if (readTopMovie(fbTop) < 0)
+    {
+        if (!config->imgError) {
+            memcpy(fbTop, config->bgImgTopBuff, (size_t) config->bgImgTopSize);
+        } else {
+            gfxClearTop(anim->bgTop1, anim->bgTop2);
+        }
     }
-    if (!config->imgErrorBot) {
-        memcpy(gfxGetFramebuffer(GFX_BOTTOM, GFX_LEFT, NULL, NULL), config->bgImgBotBuff,
-               (size_t) config->bgImgBotSize);
-    } else {
-        gfxClearBot(anim->bgBot);
+    u8* fbBot = gfxGetFramebuffer(GFX_BOTTOM, GFX_LEFT, NULL, NULL);
+    if (readBotMovie(fbBot) < 0)
+    {
+        if (!config->imgErrorBot) {
+            memcpy(fbBot, config->bgImgBotBuff, (size_t) config->bgImgBotSize);
+        } else {
+            gfxClearBot(anim->bgBot);
+        }
     }
     drawRectColor(GFX_TOP, GFX_LEFT, MENU_MIN_X, MENU_MIN_Y - 20, MENU_MAX_X, MENU_MAX_Y, anim->borders);
 }
