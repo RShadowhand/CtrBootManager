@@ -228,6 +228,59 @@ int fileRead(const char *path, void *data, size_t size) {
     return fileReadOffset(path, data, size, 0);
 }
 
+int getFileHandleSize()
+{
+#ifdef ARM9
+    return sizeof(FIL);
+#else
+    return sizeof(FILE*);
+#endif
+}
+
+int fileHandleOpen(void* handlePtr, const char *filePath)
+{
+#ifdef ARM9
+    return (f_open((FIL*)handlePtr, filePath, FA_READ | FA_OPEN_EXISTING) == FR_OK) ? 0 : -1;
+#else
+    *(FILE**)handlePtr = fopen(filePath, "rt");
+    return ( NULL != *(FILE**)handlePtr ) ? 0 : -1;
+#endif
+}
+
+size_t fileHandleSize(void* handlePtr)
+{
+#ifdef ARM9
+    return f_size((FIL*)handlePtr);
+#else
+    *(FILE**)handlePtr(file, 0, SEEK_END);
+    return ftell(*(FILE**)handlePtr);
+#endif
+}
+
+int fileHandleRead(void* handlePtr, void *data, size_t size, u32 offset)
+{
+#ifdef ARM9
+    UINT bytes_read = 0;
+    f_lseek((FIL*)handlePtr, offset);
+    if (f_read((FIL*)handlePtr, data, size, &bytes_read) != FR_OK)
+        return -1;
+    return ( bytes_read > 0 ) ? bytes_read : -1;
+#else
+    fseek(*(FILE**)handlePtr, offset, SEEK_SET );
+    u32 bytes_read = fread(data, size, 1, *(FILE**)handlePtr);
+    return ( bytes_read > 0 ) ? bytes_read : -1;
+#endif
+}
+
+int fileHandleClose(void* handlePtr)
+{
+#ifdef ARM9
+    return f_close((FIL*)handlePtr);
+#else
+    return fclose(*(FILE**)handlePtr);
+#endif
+}
+
 int load_homemenu() {
 #ifdef ARM9
     debug("load_homemenu not implemented");
