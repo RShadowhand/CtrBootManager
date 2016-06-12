@@ -8,7 +8,7 @@ extern "C" {
 #ifdef ARM9
 
 #include "arm9/source/common.h"
-#define CONFIG_PATH "/a9lh.cfg"
+#define CONFIG_PATH "/a9lh.cfg\0Free space for binary patch to chainload another instance of CtrBootManager9... Space ends up now!"
 
 #else
     
@@ -32,6 +32,17 @@ typedef struct {
     binary_patch patches[PATCHES_MAX_PER_ENTRY];
     int patchesCount;
 } boot_entry_s;
+
+typedef struct {
+    char path[128];
+    int compressed;
+    int loopCount;
+    int loopReverse;
+    int loopStartFrame;
+    int loopTimeOnStartFrame;
+    int loopEndFrame;
+    int loopTimeOnEndFrame;
+} movie_config_s;
 
 typedef struct {
     int timeout;
@@ -84,6 +95,10 @@ typedef struct {
     u8 *bgImgBotBuff;
     off_t bgImgTopSize;
     off_t bgImgBotSize;
+
+    movie_config_s movieTop;
+    movie_config_s movieBot;
+
 } boot_config_s;
 
 boot_config_s *config;
