@@ -31,6 +31,16 @@ int fileReadOffset(const char *path, void *data, size_t size, u32 offset);
 
 int fileRead(const char *path, void *data, size_t size);
 
+int getFileHandleSize();
+
+int fileHandleOpen(void* handlePtr, const char *filePath);
+
+size_t fileHandleSize(void* handlePtr);
+
+int fileHandleRead(void* handlePtr, void *data, size_t size, u32 offset);
+
+int fileHandleClose(void* handlePtr);
+
 void svcSleep(u32 millis);
 
 const char *get_filename_ext(const char *filename);
