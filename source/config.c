@@ -13,7 +13,8 @@
 #include "memory.h"
 #endif
 
-#define MATCH(s, n) strcmp(section, s) == 0 && strcmp(name, n) == 0
+#define SECTION_MATCH(s) strcmp(section, s) == 0
+#define NAME_MATCH(n) strcmp(name, n) == 0
 
 typedef struct {
     const char *ptr;
@@ -167,73 +168,121 @@ static int handler(void *user, const char *section, const char *name,
     }
 
     // general
-    if (MATCH("general", "timeout")) {
-        config->timeout = atoi(item);
-    } else if (MATCH("general", "recovery")) {
-        config->recovery = atoi(item);
-    } else if (MATCH("general", "default")) {
-        config->index = atoi(item);
+    if (SECTION_MATCH("general"))
+    {
+        if (NAME_MATCH("timeout")) {
+            config->timeout = atoi(item);
+        } else if (NAME_MATCH("recovery")) {
+            config->recovery = atoi(item);
+        } else if (NAME_MATCH("default")) {
+            config->index = atoi(item);
+        }
+    #ifndef ARM9
+        else if (NAME_MATCH("autobootfix")) {
+            config->autobootfix = atoi(item);
+        }
+    #endif
     }
-#ifndef ARM9
-    else if (MATCH("general", "autobootfix")) {
-        config->autobootfix = atoi(item);
-    }
-#endif
 
     // theme
-    else if (MATCH("theme", "bgTop1")) {
-        setColor(config->bgTop1, item);
-    } else if (MATCH("theme", "bgTop2")) {
-        setColor(config->bgTop2, item);
-    } else if (MATCH("theme", "bgBottom")) {
-        setColor(config->bgBot, item);
-	} else if (MATCH("theme", "highlight")) {
-        setColorAlpha(config->highlight, item);
-    } else if (MATCH("theme", "borders")) {
-        setColorAlpha(config->borders, item);
-    } else if (MATCH("theme", "font1")) {
-        setColorAlpha(config->fntDef, item);
-    } else if (MATCH("theme", "font2")) {
-        setColorAlpha(config->fntSel, item);
-    } else if (MATCH("theme", "bgImgTop")) {
-        strncpy(config->bgImgTop, item, 128);
-    } else if (MATCH("theme", "bgImgBot")) {
-        strncpy(config->bgImgBot, item, 128);
+    else if (SECTION_MATCH("theme"))
+    {
+        if (NAME_MATCH("bgTop1")) {
+            setColor(config->bgTop1, item);
+        } else if (NAME_MATCH("bgTop2")) {
+            setColor(config->bgTop2, item);
+        } else if (NAME_MATCH("bgBottom")) {
+            setColor(config->bgBot, item);
+        } else if (NAME_MATCH("highlight")) {
+            setColorAlpha(config->highlight, item);
+        } else if (NAME_MATCH("borders")) {
+            setColorAlpha(config->borders, item);
+        } else if (NAME_MATCH("font1")) {
+            setColorAlpha(config->fntDef, item);
+        } else if (NAME_MATCH("font2")) {
+            setColorAlpha(config->fntSel, item);
+        } else if (NAME_MATCH("bgImgTop")) {
+            strncpy(config->bgImgTop, item, 128);
+        } else if (NAME_MATCH("bgImgBot")) {
+            strncpy(config->bgImgBot, item, 128);
+        }
     }
     
     // animation
-    else if (MATCH("animation", "bgTop1Anim")) {
-        setAnimWithColor(&config->bgTop1AnimTime, &config->bgTop1AnimTimeStart, config->bgTop1AnimColor, item);
-    } else if (MATCH("animation", "bgTop2Anim")) {
-        setAnimWithColor(&config->bgTop2AnimTime, &config->bgTop2AnimTimeStart, config->bgTop2AnimColor, item);
-    } else if (MATCH("animation", "bgBottomAnim")) {
-        setAnimWithColor(&config->bgBotAnimTime, &config->bgBotAnimTimeStart, config->bgBotAnimColor, item);
-	} else if (MATCH("animation", "highlightAnim")) {
-        setAnimWithColorAlpha(&config->highlightAnimTime, &config->highlightAnimTimeStart, config->highlightAnimColor, item);
-    } else if (MATCH("animation", "bordersAnim")) {
-        setAnimWithColorAlpha(&config->bordersAnimTime, &config->bordersAnimTimeStart, config->bordersAnimColor, item);
-    } else if (MATCH("animation", "font1Anim")) {
-        setAnimWithColorAlpha(&config->fntDefAnimTime, &config->fntDefAnimTimeStart, config->fntDefAnimColor, item);
-    } else if (MATCH("animation", "font2Anim")) {
-        setAnimWithColorAlpha(&config->fntSelAnimTime, &config->fntSelAnimTimeStart, config->fntSelAnimColor, item);
-    } else if (MATCH("animation", "menuFadeIn")) {
-        setAnimTimes(&config->menuFadeInTime, &config->menuFadeInTimeStart, item);
+    else if (SECTION_MATCH("animation"))
+    {
+        if (NAME_MATCH("bgTop1Anim")) {
+            setAnimWithColor(&config->bgTop1AnimTime, &config->bgTop1AnimTimeStart, config->bgTop1AnimColor, item);
+        } else if (NAME_MATCH("bgTop2Anim")) {
+            setAnimWithColor(&config->bgTop2AnimTime, &config->bgTop2AnimTimeStart, config->bgTop2AnimColor, item);
+        } else if (NAME_MATCH("bgBottomAnim")) {
+            setAnimWithColor(&config->bgBotAnimTime, &config->bgBotAnimTimeStart, config->bgBotAnimColor, item);
+        } else if (NAME_MATCH("highlightAnim")) {
+            setAnimWithColorAlpha(&config->highlightAnimTime, &config->highlightAnimTimeStart, config->highlightAnimColor, item);
+        } else if (NAME_MATCH("bordersAnim")) {
+            setAnimWithColorAlpha(&config->bordersAnimTime, &config->bordersAnimTimeStart, config->bordersAnimColor, item);
+        } else if (NAME_MATCH("font1Anim")) {
+            setAnimWithColorAlpha(&config->fntDefAnimTime, &config->fntDefAnimTimeStart, config->fntDefAnimColor, item);
+        } else if (NAME_MATCH("font2Anim")) {
+            setAnimWithColorAlpha(&config->fntSelAnimTime, &config->fntSelAnimTimeStart, config->fntSelAnimColor, item);
+        } else if (NAME_MATCH("menuFadeIn")) {
+            setAnimTimes(&config->menuFadeInTime, &config->menuFadeInTimeStart, item);
+        }
+    }
+    
+    // movie
+    else if (SECTION_MATCH("movie"))
+    {
+        if (NAME_MATCH("movieTop")) {
+            strncpy(config->movieTop.path, item, 128);
+        } else if (NAME_MATCH("movieTopCompress")) {
+            config->movieTop.compressed = atoi(item);
+        } else if (NAME_MATCH("movieTopLoop")) {
+            config->movieTop.loopCount = atoi(item);
+        } else if (NAME_MATCH("movieTopLoopReverse")) {
+            config->movieTop.loopReverse = atoi(item);
+        } else if (NAME_MATCH("movieTopLoopStart")) {
+            config->movieTop.loopStartFrame = atoi(item);
+        } else if (NAME_MATCH("movieTopTimeOnLoopStart")) {
+            config->movieTop.loopTimeOnStartFrame = atoi(item);
+        } else if (NAME_MATCH("movieTopLoopEnd")) {
+            config->movieTop.loopEndFrame = atoi(item);
+        } else if (NAME_MATCH("movieTopTimeOnLoopEnd")) {
+            config->movieTop.loopTimeOnEndFrame = atoi(item);
+        } else if (NAME_MATCH("movieBot")) {
+            strncpy(config->movieBot.path, item, 128);
+        } else if (NAME_MATCH("movieBotCompress")) {
+            config->movieBot.compressed = atoi(item);
+        } else if (NAME_MATCH("movieBotLoop")) {
+            config->movieBot.loopCount = atoi(item);
+        } else if (NAME_MATCH("movieBotLoopReverse")) {
+            config->movieBot.loopReverse = atoi(item);
+        } else if (NAME_MATCH("movieBotLoopStart")) {
+            config->movieBot.loopStartFrame = atoi(item);
+        } else if (NAME_MATCH("movieBotTimeOnLoopStart")) {
+            config->movieBot.loopTimeOnStartFrame = atoi(item);
+        } else if (NAME_MATCH("movieBotLoopEnd")) {
+            config->movieBot.loopEndFrame = atoi(item);
+        } else if (NAME_MATCH("movieBotTimeOnLoopEnd")) {
+            config->movieBot.loopTimeOnEndFrame = atoi(item);
+        }
     }
     
     // entries
-    else {
+    else if (SECTION_MATCH("entry"))
+    {
         int entryInd = config->count;
         if ( entryInd < CONFIG_MAX_ENTRIES )
         {
-            if (MATCH("entry", "title")) {
+            if (NAME_MATCH("title")) {
                 strncpy(config->entries[entryInd].title, item, 64);
-            } else if (MATCH("entry", "path")) {
+            } else if (NAME_MATCH("path")) {
                 strncpy(config->entries[entryInd].path, item, 128);
-            } else if (MATCH("entry", "offset")) {
+            } else if (NAME_MATCH("offset")) {
                 config->entries[entryInd].offset = strtoul(item, NULL, 16);
             }
             // End current entry
-            else if (MATCH("entry", "key")) {
+            else if (NAME_MATCH("key")) {
                 if(strlen(config->entries[entryInd].title) > 0) {
                     config->entries[entryInd].key = atoi(item);
                     config->count++;
@@ -246,17 +295,17 @@ static int handler(void *user, const char *section, const char *name,
                 if ( patchInd < PATCHES_MAX_PER_ENTRY )
                 {
                     // Binary patches for current entry
-                    if (MATCH("entry", "patchMemSearch")) {
+                    if (NAME_MATCH("patchMemSearch")) {
                         binary_patch* curPatch = &config->entries[entryInd].patches[patchInd];
                         readStrAsHexData(item, curPatch->memToSearch, &curPatch->memToSearchSize);
-                    } else if (MATCH("entry", "patchMemOverwrite")) {
+                    } else if (NAME_MATCH("patchMemOverwrite")) {
                         binary_patch* curPatch = &config->entries[entryInd].patches[patchInd];
                         readStrAsHexData(item, curPatch->memOverwrite, &curPatch->memOverwriteSize);
-                    } else if (MATCH("entry", "patchMemOverwriteStr")) {
+                    } else if (NAME_MATCH("patchMemOverwriteStr")) {
                         binary_patch* curPatch = &config->entries[entryInd].patches[patchInd];
                         curPatch->memOverwriteSize = strlen(item)+1;
                         memcpy(curPatch->memOverwrite, item, curPatch->memOverwriteSize);
-                    } else if (MATCH("entry", "patchMemOverwriteWStr")) {
+                    } else if (NAME_MATCH("patchMemOverwriteWStr")) {
                         binary_patch* curPatch = &config->entries[entryInd].patches[patchInd];
                         int strSize = strlen(item)+1;
                         curPatch->memOverwriteSize = strSize*2;
@@ -265,7 +314,7 @@ static int handler(void *user, const char *section, const char *name,
                             curPatch->memOverwrite[2*i] = item[i];
                             curPatch->memOverwrite[2*i+1] = '\0';
                         }
-                    } else if (MATCH("entry", "patchOccurence")) {
+                    } else if (NAME_MATCH("patchOccurence")) {
                         config->entries[entryInd].patches[patchInd].occurence = atoi(item);
                         config->entries[entryInd].patchesCount++;
                     }
@@ -278,6 +327,8 @@ static int handler(void *user, const char *section, const char *name,
 }
 
 void configThemeInit() {
+
+    // theme
     config->imgError = true;
     config->imgErrorBot = true;
     config->bgImgTop[0] = '\0';
@@ -289,6 +340,8 @@ void configThemeInit() {
     memcpy(config->borders, (u8[4]) {0xff, 0xff, 0xff, 0xff}, sizeof(u8[4]));
     memcpy(config->fntDef, (u8[4]) {0xff, 0xff, 0xff, 0xff}, sizeof(u8[4]));
     memcpy(config->fntSel, (u8[4]) {0x00, 0x00, 0x00, 0xff}, sizeof(u8[4]));
+    
+    // animation
     config->bgTop1AnimTime = 0;
     config->bgTop2AnimTime = 0;
     config->bgBotAnimTime = 0;
@@ -298,6 +351,25 @@ void configThemeInit() {
     config->fntSelAnimTime = 0;
     config->menuFadeInTime = 0;
     config->menuFadeInTimeStart = 0;
+    
+    // movie
+    config->movieTop.path[0] = '\0';
+    config->movieTop.compressed = 0;
+    config->movieTop.loopCount = 0;
+    config->movieTop.loopReverse = 0;
+    config->movieTop.loopStartFrame = 0;
+    config->movieTop.loopTimeOnStartFrame = 0;
+    config->movieTop.loopEndFrame = -1;
+    config->movieTop.loopTimeOnEndFrame = 0;
+
+    config->movieBot.path[0] = '\0';
+    config->movieBot.compressed = 0;
+    config->movieBot.loopCount = 0;
+    config->movieBot.loopReverse = 0;
+    config->movieBot.loopStartFrame = 0;
+    config->movieBot.loopTimeOnStartFrame = 0;
+    config->movieBot.loopEndFrame = -1;
+    config->movieBot.loopTimeOnEndFrame = 0;
 }
 
 int configInit() {
@@ -504,6 +576,44 @@ void configSave() {
     if ( config->menuFadeInTime > 0 )
         size += snprintf(cfg+size, 256, "menuFadeIn=%i:%i;\n", config->menuFadeInTime, config->menuFadeInTimeStart);
     
+    // movie section
+    size += snprintf(cfg+size, 256, "\n[movie];\n");
+    size += snprintf(cfg+size, 256, "movieTop=%s;\n", config->movieTop.path);
+    if ( 0 != config->movieTop.compressed )
+        size += snprintf(cfg+size, 256, "movieTopCompress=1;\n");
+    if ( 0 != config->movieTop.loopCount )
+    {
+        size += snprintf(cfg+size, 256, "movieTopLoop=%i;\n", config->movieTop.loopCount);
+        if ( 0 != config->movieTop.loopReverse )
+            size += snprintf(cfg+size, 256, "movieTopLoopReverse=1;\n");
+        if ( config->movieTop.loopStartFrame > 0 )
+            size += snprintf(cfg+size, 256, "movieTopLoopStart=%i;\n", config->movieTop.loopStartFrame);
+        if ( config->movieTop.loopTimeOnStartFrame > 0 )
+            size += snprintf(cfg+size, 256, "movieTopTimeOnLoopStart=%i;\n", config->movieTop.loopTimeOnStartFrame);
+        if ( config->movieTop.loopEndFrame >= 0 )
+            size += snprintf(cfg+size, 256, "movieTopLoopEnd=%i;\n", config->movieTop.loopEndFrame);
+        if ( config->movieTop.loopTimeOnEndFrame > 0 )
+            size += snprintf(cfg+size, 256, "movieTopTimeOnLoopEnd=%i;\n", config->movieTop.loopTimeOnEndFrame);
+    }
+
+    size += snprintf(cfg+size, 256, "movieBot=%s;\n", config->movieBot.path);
+    if ( 0 != config->movieBot.compressed )
+        size += snprintf(cfg+size, 256, "movieBotCompress=1;\n");
+    if ( 0 != config->movieBot.loopCount )
+    {
+        size += snprintf(cfg+size, 256, "movieBotLoop=%i;\n", config->movieTop.loopCount);
+        if ( 0 != config->movieBot.loopReverse )
+            size += snprintf(cfg+size, 256, "movieBotLoopReverse=1;\n");
+        if ( config->movieBot.loopStartFrame > 0 )
+            size += snprintf(cfg+size, 256, "movieBotLoopStart=%i;\n", config->movieBot.loopStartFrame);
+        if ( config->movieBot.loopTimeOnStartFrame > 0 )
+            size += snprintf(cfg+size, 256, "movieBotTimeOnLoopStart=%i;\n", config->movieBot.loopTimeOnStartFrame);
+        if ( config->movieBot.loopEndFrame >= 0 )
+            size += snprintf(cfg+size, 256, "movieBotLoopEnd=%i;\n", config->movieBot.loopEndFrame);
+        if ( config->movieBot.loopTimeOnEndFrame > 0 )
+            size += snprintf(cfg+size, 256, "movieBotTimeOnLoopEnd=%i;\n", config->movieBot.loopTimeOnEndFrame);
+    }
+
     // entries section
     for(i=0; i<config->count; i++) {
         size += snprintf(cfg+size, 256, "\n[entry];\n");
