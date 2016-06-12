@@ -12,10 +12,12 @@
 #define PTR_TOP_BG              (u8*)(0x25000000)
 #define PTR_BOT_BG              (u8*)(0x25046500)
 #define PTR_CFG                 (u8*)(0x25200000)
-#define PTR_CFG_TMP             (u8*)(0x25230000)
-#define PTR_ANIM                (u8*)(0x25240000)
 #define PTR_PICKER              (u8*)(0x25210000)
 #define PTR_PICKER_FILE         (u8*)(0x25220000)
+#define PTR_CFG_TMP             (u8*)(0x25230000)
+#define PTR_ANIM                (u8*)(0x25240000)
+#define PTR_MOVIE_COMP          (u8*)(0x25250000)
+#define PTR_MOVIE_LOOP          (u8*)(0x25450000)
 
 #define PTR_PAYLOAD_MAIN        0x23F00000
 #define PTR_PAYLOAD_MAIN_DATA   0x26000000
