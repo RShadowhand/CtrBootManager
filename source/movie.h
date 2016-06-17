@@ -9,13 +9,18 @@ extern "C" {
 
 typedef struct {
     qlz_state_decompress state;
-    char* frame_prev;
-    char* frame_curr;
+    const char* frame_prev_read;
+    char* frame_prev_write;
     char* frame_comp;
+    int reverse;
 } comp_manager_s;
 
 int readMovieFrame(void* iFileHandlePtr, int* ioFileOffset, comp_manager_s* iCompMgr, char* oFrameBuffer, int iFrameBufferSize);
-int getMovieFramesCount(void* iFileHandlePtr, int iFrameBufferSize, int iCompressed, int* ioFrameOffset);
+int readCompressedMovieFrameFromBuffer(comp_manager_s* iCompMgr, char* oFrameBuffer, int iFrameBufferSize);
+
+int getMovieFramesCount(void* iFileHandlePtr, int iFrameBufferSize, int iCompressed);
+void getMovieDataOffsetForFrames(void* iFileHandlePtr, int iFrameBufferSize, int iCompressed, int iStartFrame, int iEndFrame,
+                                 int* oStartFrameOffset, int* oDataSizeToEndFrame);
 
 #ifdef __cplusplus
 }
