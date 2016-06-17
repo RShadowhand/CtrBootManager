@@ -5,6 +5,8 @@
 *   Screen deinit code by tiniVi.
 */
 
+#ifdef ARM9
+
 #include "screeninit.h"
 
 #include <stdio.h>
@@ -62,3 +64,5 @@ void initScreens(void)
 
     //clearScreens();
 }
+
+#endif
