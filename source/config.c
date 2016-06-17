@@ -120,6 +120,78 @@ void writeHexDataAsStr(const char *data, int dataSize, char* dataAsStr) {
     }
 }
 
+void readMovieProperty(movie_config_s* mvConf, const char *name, const char* value) {
+    
+    if (NAME_MATCH("path")) {
+        strncpy(mvConf->path, value, 128);
+    } else if (NAME_MATCH("compression")) {
+        if ( value[0] >= '0' && value[0] <= '9' )
+            mvConf->compressed = atoi(value);
+        else if ( 0 == strcmp(value, "QuickLZ") )
+            mvConf->compressed = 1;
+    } else if (NAME_MATCH("loopCount")) {
+        if ( value[0] == 'I' || value[0] <= 'i' ) // Value for "ININITE" or "infinite"
+            mvConf->loopCount = -1;
+        else
+            mvConf->loopCount = atoi(value);
+    } else if (NAME_MATCH("loopStreamType")) {
+        if ( value[0] >= '0' && value[0] <= '9' )
+            mvConf->loopStreamType = atoi(value);
+        else if ( 0 == strcmp(value, "file") )
+            mvConf->loopStreamType = FILE_STREAM;
+        else if ( 0 == strcmp(value, "memory") )
+            mvConf->loopStreamType = MEMORY_STREAM;
+        else if ( 0 == strcmp(value, "compressed_memory") )
+            mvConf->loopStreamType = MEMORY_COMPRESSED_STREAM;
+    } else if (NAME_MATCH("loopReverse")) {
+        if ( value[0] >= '0' && value[0] <= '9' )
+            mvConf->loopReverse = atoi(value);
+        else if ( value[0] == 'Y' || value[0] == 'y' || value[0] == 'T' || value[0] == 't' )
+            mvConf->loopReverse = 1; // Value for "YES", "yes", "TRUE" and "true"
+        else if ( value[0] == 'N' || value[0] == 'n' || value[0] == 'F' || value[0] == 'f' )
+            mvConf->loopReverse = 0; // Value for "NO", "no", "FALSE" and "false"
+    } else if (NAME_MATCH("loopStartFrame")) {
+        mvConf->loopStartFrame = atoi(value);
+    } else if (NAME_MATCH("delayOnLoopStart")) {
+        mvConf->loopTimeOnStartFrame = atoi(value);
+    } else if (NAME_MATCH("loopEndFrame")) {
+        mvConf->loopEndFrame = atoi(value);
+    } else if (NAME_MATCH("delayOnLoopEnd")) {
+        mvConf->loopTimeOnEndFrame = atoi(value);
+    }
+}
+
+void writeMovieProperty(movie_config_s* mvConf, char *cfg, int* sizePtr) {
+
+    *sizePtr += snprintf(cfg+*sizePtr, 256, "path=%s;\n", mvConf->path);
+    if ( 0 != mvConf->compressed )
+        *sizePtr += snprintf(cfg+*sizePtr, 256, "compression=QuickLZ;\n");
+    if ( 0 != mvConf->loopCount )
+    {
+        if ( mvConf->loopCount < 0 )
+            *sizePtr += snprintf(cfg+*sizePtr, 256, "loopCount=infinite;\n");
+        else
+            *sizePtr += snprintf(cfg+*sizePtr, 256, "loopCount=%i;\n", mvConf->loopCount);
+        if ( 0 != mvConf->loopStreamType )
+        {
+            if ( MEMORY_COMPRESSED_STREAM == mvConf->loopStreamType )
+                *sizePtr += snprintf(cfg+*sizePtr, 256, "loopStreamType=compressed_memory;\n");
+            else
+                *sizePtr += snprintf(cfg+*sizePtr, 256, "loopStreamType=memory;\n");
+        }
+        if ( 0 != mvConf->loopReverse )
+            *sizePtr += snprintf(cfg+*sizePtr, 256, "loopReverse=yes;\n");
+        if ( mvConf->loopStartFrame > 0 )
+            *sizePtr += snprintf(cfg+*sizePtr, 256, "loopStartFrame=%i;\n", mvConf->loopStartFrame);
+        if ( mvConf->loopTimeOnStartFrame > 0 )
+            *sizePtr += snprintf(cfg+*sizePtr, 256, "delayOnLoopStart=%i;\n", mvConf->loopTimeOnStartFrame);
+        if ( mvConf->loopEndFrame >= 0 )
+            *sizePtr += snprintf(cfg+*sizePtr, 256, "loopEndFrame=%i;\n", mvConf->loopEndFrame);
+        if ( mvConf->loopTimeOnEndFrame > 0 )
+            *sizePtr += snprintf(cfg+*sizePtr, 256, "delayOnLoopEnd=%i;\n", mvConf->loopTimeOnEndFrame);
+    }
+}
+
 static char *ini_buffer_reader(char *str, int num, void *stream) {
     buffer_ctx *ctx = (buffer_ctx *) stream;
     int idx = 0;
@@ -211,61 +283,30 @@ static int handler(void *user, const char *section, const char *name,
     // animation
     else if (SECTION_MATCH("animation"))
     {
-        if (NAME_MATCH("bgTop1Anim")) {
+        if (NAME_MATCH("bgTop1")) {
             setAnimWithColor(&config->bgTop1AnimTime, &config->bgTop1AnimTimeStart, config->bgTop1AnimColor, item);
-        } else if (NAME_MATCH("bgTop2Anim")) {
+        } else if (NAME_MATCH("bgTop2")) {
             setAnimWithColor(&config->bgTop2AnimTime, &config->bgTop2AnimTimeStart, config->bgTop2AnimColor, item);
-        } else if (NAME_MATCH("bgBottomAnim")) {
+        } else if (NAME_MATCH("bgBottom")) {
             setAnimWithColor(&config->bgBotAnimTime, &config->bgBotAnimTimeStart, config->bgBotAnimColor, item);
-        } else if (NAME_MATCH("highlightAnim")) {
+        } else if (NAME_MATCH("highlight")) {
             setAnimWithColorAlpha(&config->highlightAnimTime, &config->highlightAnimTimeStart, config->highlightAnimColor, item);
-        } else if (NAME_MATCH("bordersAnim")) {
+        } else if (NAME_MATCH("borders")) {
             setAnimWithColorAlpha(&config->bordersAnimTime, &config->bordersAnimTimeStart, config->bordersAnimColor, item);
-        } else if (NAME_MATCH("font1Anim")) {
+        } else if (NAME_MATCH("font1")) {
             setAnimWithColorAlpha(&config->fntDefAnimTime, &config->fntDefAnimTimeStart, config->fntDefAnimColor, item);
-        } else if (NAME_MATCH("font2Anim")) {
+        } else if (NAME_MATCH("font2")) {
             setAnimWithColorAlpha(&config->fntSelAnimTime, &config->fntSelAnimTimeStart, config->fntSelAnimColor, item);
         } else if (NAME_MATCH("menuFadeIn")) {
             setAnimTimes(&config->menuFadeInTime, &config->menuFadeInTimeStart, item);
         }
     }
     
-    // movie
-    else if (SECTION_MATCH("movie"))
-    {
-        if (NAME_MATCH("movieTop")) {
-            strncpy(config->movieTop.path, item, 128);
-        } else if (NAME_MATCH("movieTopCompress")) {
-            config->movieTop.compressed = atoi(item);
-        } else if (NAME_MATCH("movieTopLoop")) {
-            config->movieTop.loopCount = atoi(item);
-        } else if (NAME_MATCH("movieTopLoopReverse")) {
-            config->movieTop.loopReverse = atoi(item);
-        } else if (NAME_MATCH("movieTopLoopStart")) {
-            config->movieTop.loopStartFrame = atoi(item);
-        } else if (NAME_MATCH("movieTopTimeOnLoopStart")) {
-            config->movieTop.loopTimeOnStartFrame = atoi(item);
-        } else if (NAME_MATCH("movieTopLoopEnd")) {
-            config->movieTop.loopEndFrame = atoi(item);
-        } else if (NAME_MATCH("movieTopTimeOnLoopEnd")) {
-            config->movieTop.loopTimeOnEndFrame = atoi(item);
-        } else if (NAME_MATCH("movieBot")) {
-            strncpy(config->movieBot.path, item, 128);
-        } else if (NAME_MATCH("movieBotCompress")) {
-            config->movieBot.compressed = atoi(item);
-        } else if (NAME_MATCH("movieBotLoop")) {
-            config->movieBot.loopCount = atoi(item);
-        } else if (NAME_MATCH("movieBotLoopReverse")) {
-            config->movieBot.loopReverse = atoi(item);
-        } else if (NAME_MATCH("movieBotLoopStart")) {
-            config->movieBot.loopStartFrame = atoi(item);
-        } else if (NAME_MATCH("movieBotTimeOnLoopStart")) {
-            config->movieBot.loopTimeOnStartFrame = atoi(item);
-        } else if (NAME_MATCH("movieBotLoopEnd")) {
-            config->movieBot.loopEndFrame = atoi(item);
-        } else if (NAME_MATCH("movieBotTimeOnLoopEnd")) {
-            config->movieBot.loopTimeOnEndFrame = atoi(item);
-        }
+    // movies
+    else if (SECTION_MATCH("topMovie")) {
+        readMovieProperty(&config->movieTop, name, item);
+    } else if (SECTION_MATCH("bottomMovie")) {
+        readMovieProperty(&config->movieBot, name, item);
     }
     
     // entries
@@ -356,6 +397,7 @@ void configThemeInit() {
     config->movieTop.path[0] = '\0';
     config->movieTop.compressed = 0;
     config->movieTop.loopCount = 0;
+    config->movieTop.loopStreamType = 0;
     config->movieTop.loopReverse = 0;
     config->movieTop.loopStartFrame = 0;
     config->movieTop.loopTimeOnStartFrame = 0;
@@ -365,6 +407,7 @@ void configThemeInit() {
     config->movieBot.path[0] = '\0';
     config->movieBot.compressed = 0;
     config->movieBot.loopCount = 0;
+    config->movieBot.loopStreamType = 0;
     config->movieBot.loopReverse = 0;
     config->movieBot.loopStartFrame = 0;
     config->movieBot.loopTimeOnStartFrame = 0;
@@ -471,7 +514,7 @@ void configSave() {
     memset(cfg, 0, buffSize); // 256 lines * 256 char
 
     // general section
-    size += snprintf(cfg, 256, "[general];\n");
+    size += snprintf(cfg, 256, "[general]\n");
 #ifndef ARM9
     size += snprintf(cfg+size, 256, "autobootfix=%i;\n", config->autobootfix);
 #endif
@@ -480,7 +523,7 @@ void configSave() {
     size += snprintf(cfg+size, 256, "default=%i;\n\n", config->index);
 
     // theme section
-    size += snprintf(cfg+size, 256, "[theme];\n");
+    size += snprintf(cfg+size, 256, "[theme]\n");
     size += snprintf(cfg+size, 256, "bgTop1=%02X%02X%02X;\n", config->bgTop1[0], config->bgTop1[1], config->bgTop1[2]);
     size += snprintf(cfg+size, 256, "bgTop2=%02X%02X%02X;\n", config->bgTop2[0], config->bgTop2[1], config->bgTop2[2]);
     size += snprintf(cfg+size, 256, "bgBottom=%02X%02X%02X;\n", config->bgBot[0], config->bgBot[1], config->bgBot[2]);
@@ -505,32 +548,32 @@ void configSave() {
     size += snprintf(cfg+size, 256, "bgImgBot=%s;\n\n", config->bgImgBot);
 
     // animation section
-    size += snprintf(cfg+size, 256, "[animation];\n");
+    size += snprintf(cfg+size, 256, "[animation]\n");
     if ( config->bgTop1AnimTime > 0 )
     {
-        size += snprintf(cfg+size, 256, "bgTop1Anim=%i:%i:%02X%02X%02X;\n", config->bgTop1AnimTime, config->bgTop1AnimTimeStart,
+        size += snprintf(cfg+size, 256, "bgTop1=%i:%i:%02X%02X%02X;\n", config->bgTop1AnimTime, config->bgTop1AnimTimeStart,
                 config->bgTop1AnimColor[0], config->bgTop1AnimColor[1], config->bgTop1AnimColor[2]);
     }
     if ( config->bgTop2AnimTime > 0 )
     {
-        size += snprintf(cfg+size, 256, "bgTop2Anim=%i:%i:%02X%02X%02X;\n", config->bgTop2AnimTime, config->bgTop2AnimTimeStart,
+        size += snprintf(cfg+size, 256, "bgTop2=%i:%i:%02X%02X%02X;\n", config->bgTop2AnimTime, config->bgTop2AnimTimeStart,
                 config->bgTop2AnimColor[0], config->bgTop2AnimColor[1], config->bgTop2AnimColor[2]);
     }
     if ( config->bgBotAnimTime > 0 )
     {
-        size += snprintf(cfg+size, 256, "bgBottomAnim=%i:%i:%02X%02X%02X;\n", config->bgBotAnimTime, config->bgBotAnimTimeStart,
+        size += snprintf(cfg+size, 256, "bgBottom=%i:%i:%02X%02X%02X;\n", config->bgBotAnimTime, config->bgBotAnimTimeStart,
                 config->bgBotAnimColor[0], config->bgBotAnimColor[1], config->bgBotAnimColor[2]);
     }
     if ( config->highlightAnimTime > 0 )
     {
         if ( config->highlightAnimColor[3] < 0xFF )
         {
-            size += snprintf(cfg+size, 256, "highlightAnim=%i:%i:%02X%02X%02X%02X;\n", config->highlightAnimTime, config->highlightAnimTimeStart,
+            size += snprintf(cfg+size, 256, "highlight=%i:%i:%02X%02X%02X%02X;\n", config->highlightAnimTime, config->highlightAnimTimeStart,
                     config->highlightAnimColor[0], config->highlightAnimColor[1], config->highlightAnimColor[2], config->highlightAnimColor[3]);
         }
         else
         {
-            size += snprintf(cfg+size, 256, "highlightAnim=%i:%i:%02X%02X%02X;\n", config->highlightAnimTime, config->highlightAnimTimeStart,
+            size += snprintf(cfg+size, 256, "highlight=%i:%i:%02X%02X%02X;\n", config->highlightAnimTime, config->highlightAnimTimeStart,
                     config->highlightAnimColor[0], config->highlightAnimColor[1], config->highlightAnimColor[2]);
         }
     }
@@ -538,12 +581,12 @@ void configSave() {
     {
         if ( config->highlightAnimColor[3] < 0xFF )
         {
-            size += snprintf(cfg+size, 256, "bordersAnim=%i:%i:%02X%02X%02X%02X;\n", config->bordersAnimTime, config->bordersAnimTimeStart,
+            size += snprintf(cfg+size, 256, "borders=%i:%i:%02X%02X%02X%02X;\n", config->bordersAnimTime, config->bordersAnimTimeStart,
                     config->bordersAnimColor[0], config->bordersAnimColor[1], config->bordersAnimColor[2], config->bordersAnimColor[3]);
         }
         else
         {
-            size += snprintf(cfg+size, 256, "bordersAnim=%i:%i:%02X%02X%02X;\n", config->bordersAnimTime, config->bordersAnimTimeStart,
+            size += snprintf(cfg+size, 256, "borders=%i:%i:%02X%02X%02X;\n", config->bordersAnimTime, config->bordersAnimTimeStart,
                     config->bordersAnimColor[0], config->bordersAnimColor[1], config->bordersAnimColor[2]);
         }
     }
@@ -551,12 +594,12 @@ void configSave() {
     {
         if ( config->fntDefAnimColor[3] < 0xFF )
         {
-            size += snprintf(cfg+size, 256, "font1Anim=%i:%i:%02X%02X%02X%02X;\n", config->fntDefAnimTime, config->fntDefAnimTimeStart,
+            size += snprintf(cfg+size, 256, "font1=%i:%i:%02X%02X%02X%02X;\n", config->fntDefAnimTime, config->fntDefAnimTimeStart,
                     config->fntDefAnimColor[0], config->fntDefAnimColor[1], config->fntDefAnimColor[2], config->fntDefAnimColor[3]);
         }
         else
         {
-            size += snprintf(cfg+size, 256, "font1Anim=%i:%i:%02X%02X%02X;\n", config->fntDefAnimTime, config->fntDefAnimTimeStart,
+            size += snprintf(cfg+size, 256, "font1=%i:%i:%02X%02X%02X;\n", config->fntDefAnimTime, config->fntDefAnimTimeStart,
                     config->fntDefAnimColor[0], config->fntDefAnimColor[1], config->fntDefAnimColor[2]);
         }
     }
@@ -564,12 +607,12 @@ void configSave() {
     {
         if ( config->fntDefAnimColor[3] < 0xFF )
         {
-            size += snprintf(cfg+size, 256, "font2Anim=%i:%i:%02X%02X%02X%02X;\n", config->fntSelAnimTime, config->fntSelAnimTimeStart,
+            size += snprintf(cfg+size, 256, "font2=%i:%i:%02X%02X%02X%02X;\n", config->fntSelAnimTime, config->fntSelAnimTimeStart,
                     config->fntSelAnimColor[0], config->fntSelAnimColor[1], config->fntSelAnimColor[2], config->fntSelAnimColor[3]);
         }
         else
         {
-            size += snprintf(cfg+size, 256, "font2Anim=%i:%i:%02X%02X%02X;\n", config->fntDefAnimTime, config->fntSelAnimTimeStart,
+            size += snprintf(cfg+size, 256, "font2=%i:%i:%02X%02X%02X;\n", config->fntDefAnimTime, config->fntSelAnimTimeStart,
                     config->fntSelAnimColor[0], config->fntSelAnimColor[1], config->fntSelAnimColor[2]);
         }
     }
@@ -577,46 +620,20 @@ void configSave() {
         size += snprintf(cfg+size, 256, "menuFadeIn=%i:%i;\n", config->menuFadeInTime, config->menuFadeInTimeStart);
     
     // movie section
-    size += snprintf(cfg+size, 256, "\n[movie];\n");
-    size += snprintf(cfg+size, 256, "movieTop=%s;\n", config->movieTop.path);
-    if ( 0 != config->movieTop.compressed )
-        size += snprintf(cfg+size, 256, "movieTopCompress=1;\n");
-    if ( 0 != config->movieTop.loopCount )
+    if ( config->movieTop.path[0] != '\0' )
     {
-        size += snprintf(cfg+size, 256, "movieTopLoop=%i;\n", config->movieTop.loopCount);
-        if ( 0 != config->movieTop.loopReverse )
-            size += snprintf(cfg+size, 256, "movieTopLoopReverse=1;\n");
-        if ( config->movieTop.loopStartFrame > 0 )
-            size += snprintf(cfg+size, 256, "movieTopLoopStart=%i;\n", config->movieTop.loopStartFrame);
-        if ( config->movieTop.loopTimeOnStartFrame > 0 )
-            size += snprintf(cfg+size, 256, "movieTopTimeOnLoopStart=%i;\n", config->movieTop.loopTimeOnStartFrame);
-        if ( config->movieTop.loopEndFrame >= 0 )
-            size += snprintf(cfg+size, 256, "movieTopLoopEnd=%i;\n", config->movieTop.loopEndFrame);
-        if ( config->movieTop.loopTimeOnEndFrame > 0 )
-            size += snprintf(cfg+size, 256, "movieTopTimeOnLoopEnd=%i;\n", config->movieTop.loopTimeOnEndFrame);
+        size += snprintf(cfg+size, 256, "\n[topMovie]\n");
+        writeMovieProperty(&config->movieTop, cfg, &size);
     }
-
-    size += snprintf(cfg+size, 256, "movieBot=%s;\n", config->movieBot.path);
-    if ( 0 != config->movieBot.compressed )
-        size += snprintf(cfg+size, 256, "movieBotCompress=1;\n");
-    if ( 0 != config->movieBot.loopCount )
+    if ( config->movieBot.path[0] != '\0' )
     {
-        size += snprintf(cfg+size, 256, "movieBotLoop=%i;\n", config->movieTop.loopCount);
-        if ( 0 != config->movieBot.loopReverse )
-            size += snprintf(cfg+size, 256, "movieBotLoopReverse=1;\n");
-        if ( config->movieBot.loopStartFrame > 0 )
-            size += snprintf(cfg+size, 256, "movieBotLoopStart=%i;\n", config->movieBot.loopStartFrame);
-        if ( config->movieBot.loopTimeOnStartFrame > 0 )
-            size += snprintf(cfg+size, 256, "movieBotTimeOnLoopStart=%i;\n", config->movieBot.loopTimeOnStartFrame);
-        if ( config->movieBot.loopEndFrame >= 0 )
-            size += snprintf(cfg+size, 256, "movieBotLoopEnd=%i;\n", config->movieBot.loopEndFrame);
-        if ( config->movieBot.loopTimeOnEndFrame > 0 )
-            size += snprintf(cfg+size, 256, "movieBotTimeOnLoopEnd=%i;\n", config->movieBot.loopTimeOnEndFrame);
+        size += snprintf(cfg+size, 256, "\n[bottomMovie]\n");
+        writeMovieProperty(&config->movieBot, cfg, &size);
     }
 
     // entries section
     for(i=0; i<config->count; i++) {
-        size += snprintf(cfg+size, 256, "\n[entry];\n");
+        size += snprintf(cfg+size, 256, "\n[entry]\n");
         size += snprintf(cfg+size, 256, "title=%s;\n", config->entries[i].title);
         size += snprintf(cfg+size, 256, "path=%s;\n", config->entries[i].path);
         size += snprintf(cfg+size, 256, "offset=%x;\n", (int)config->entries[i].offset);
