@@ -11,4 +11,8 @@ typedef struct {
 
 int load(char *path, long offset, binary_patch* patches, int patchesCount);
 
+#ifndef ARM9
+int load_3dsx(char *path);
+#endif
+
 #endif // _loader_h_
