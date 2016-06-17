@@ -242,7 +242,7 @@ int fileHandleOpen(void* handlePtr, const char *filePath)
 #ifdef ARM9
     return (f_open((FIL*)handlePtr, filePath, FA_READ | FA_OPEN_EXISTING) == FR_OK) ? 0 : -1;
 #else
-    *(FILE**)handlePtr = fopen(filePath, "rt");
+    *(FILE**)handlePtr = fopen(filePath, "rb");
     return ( NULL != *(FILE**)handlePtr ) ? 0 : -1;
 #endif
 }
@@ -252,7 +252,7 @@ size_t fileHandleSize(void* handlePtr)
 #ifdef ARM9
     return f_size((FIL*)handlePtr);
 #else
-    *(FILE**)handlePtr(file, 0, SEEK_END);
+    fseek(*(FILE**)handlePtr, 0, SEEK_END);
     return ftell(*(FILE**)handlePtr);
 #endif
 }
@@ -266,8 +266,8 @@ int fileHandleRead(void* handlePtr, void *data, size_t size, u32 offset)
         return -1;
     return ( bytes_read > 0 ) ? bytes_read : -1;
 #else
-    fseek(*(FILE**)handlePtr, offset, SEEK_SET );
-    u32 bytes_read = fread(data, size, 1, *(FILE**)handlePtr);
+    fseek(*(FILE**)handlePtr, offset, SEEK_SET);
+    u32 bytes_read = fread(data, 1, size, *(FILE**)handlePtr);
     return ( bytes_read > 0 ) ? bytes_read : -1;
 #endif
 }
