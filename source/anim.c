@@ -17,6 +17,8 @@
 #define BOT_COMP_COMP_FRAME_PTR (BOT_COMP_PREV_FRAME_PTR+BOT_SCREEN_SIZE)
 
 // Total compression required memory: 1088658 = 0x109C92
+#else
+#include <stdlib.h>
 #endif
 
 #include "utility.h"
@@ -504,7 +506,7 @@ void animExit()
             free(anim->topMovie.file);
         if (anim->topMovie.comp)
         {
-            free(anim->topMovie.comp->frame_prev_read); // Same as frame_prev_write
+            free(anim->topMovie.comp->frame_prev_write); // Same as frame_prev_read
             free(anim->topMovie.comp->frame_comp);
             free(anim->topMovie.comp);
         }
@@ -515,7 +517,7 @@ void animExit()
             free(anim->botMovie.file);
         if (anim->botMovie.comp)
         {
-            free(anim->botMovie.comp->frame_prev_read); // Same as frame_prev_write
+            free(anim->botMovie.comp->frame_prev_write); // Same as frame_prev_read
             free(anim->botMovie.comp->frame_comp);
             free(anim->botMovie.comp);
         }
