@@ -130,6 +130,8 @@ int menu_config() {
 #ifndef ARM9
         drawItem(menu_index == 3, 48, "Bootfix:  %i", config->autobootfix);
 #endif
+
+        drawInfo("Unofficial version 10");
         gfxSwap();
     }
     return -1;
