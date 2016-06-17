@@ -22,7 +22,8 @@ typedef struct {
     int loopsToDo;
     
     int loopFramesCount;
-    
+
+    int loopStreamType;
     char* loopStream;
     int loopStreamSize;
     int loopReverse;
