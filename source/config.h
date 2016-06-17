@@ -24,6 +24,11 @@ extern "C" {
 #define CONFIG_MAX_ENTRIES 11
 #define PATCHES_MAX_PER_ENTRY 4
 
+#define FILE_STREAM 0
+#define MEMORY_STREAM 1
+#define MEMORY_COMPRESSED_STREAM 2
+
+
 typedef struct {
     char title[64];
     char path[128];
@@ -38,6 +43,7 @@ typedef struct {
     int compressed;
     int loopCount;
     int loopReverse;
+    int loopStreamType;
     int loopStartFrame;
     int loopTimeOnStartFrame;
     int loopEndFrame;
