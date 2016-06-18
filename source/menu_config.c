@@ -129,9 +129,11 @@ int menu_config() {
         drawItem(menu_index == 2, 32, "Recovery key:  %s", get_button(config->recovery));
 #ifndef ARM9
         drawItem(menu_index == 3, 48, "Bootfix:  %i", config->autobootfix);
+        drawInfo("CtrBootManager v2.0.0");
+#else
+        drawInfo("CtrBootManager9 v2.0.0");    
 #endif
 
-        drawInfo("Unofficial version 10");
         gfxSwap();
     }
     return -1;
