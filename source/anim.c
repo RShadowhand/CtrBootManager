@@ -63,6 +63,7 @@ void movieLoopSetup(movie_state_s* movie)
                                 *( ( MEMORY_STREAM == movie->loopStreamType ) ? (movie->loopEndFrame-movie->loopStartFrame) : 1 );
 }
 
+
 #ifdef ARM9
 void movieSetup(movie_config_s* mvConf, movie_state_s* movie, void* filePtr, comp_manager_s* compPtr, void* streamPtr)
 #else
@@ -93,8 +94,8 @@ void movieSetup(movie_config_s* mvConf, movie_state_s* movie)
         movie->comp = compPtr;
     #else
         movie->comp = (comp_manager_s*)malloc(sizeof(comp_manager_s));
-        movie->comp->frame_prev_read = malloc(movie->frameSize);
-        movie->comp->frame_comp = malloc(movie->frameSize + (movie->frameSize/10) + 9);
+        movie->comp->frame_prev_read = (const char*)malloc(movie->frameSize);
+        movie->comp->frame_comp = (char*)malloc(movie->frameSize + (movie->frameSize/10) + 9);
     #endif
         movie->comp->frame_prev_write = (char*)movie->comp->frame_prev_read;
 
@@ -149,7 +150,8 @@ void movieSetup(movie_config_s* mvConf, movie_state_s* movie)
     case FILE_STREAM:
         // We will keep file opened to stream next loops content (slower but avoid memory issues).
         // But we still keep at least uncompressed loop first and last frame in memory.
-        movie->loopStreamSize = movie->frameSize*2 + ((movie->loopEndFrame-movie->loopStartFrame+1)*sizeof(int));
+        movie->loopStreamSize = movie->frameSize*2 + ((movie->loopEndFrame-movie->loopStartFrame+2)*sizeof(int));
+		break;
         
     case MEMORY_STREAM:
         // Full uncompressed frames are kept in memory, file is closed.
@@ -161,17 +163,18 @@ void movieSetup(movie_config_s* mvConf, movie_state_s* movie)
         getMovieDataOffsetForFrames(movie->file, movie->frameSize, (NULL != movie->comp),
                                     movie->loopStartFrame, movie->loopEndFrame,
                                     NULL, &movie->loopStreamSize);
-        movie->loopStreamSize += movie->frameSize*2 + ((movie->loopEndFrame-movie->loopStartFrame+1)*sizeof(int));
+        movie->loopStreamSize += movie->frameSize*2 + ((movie->loopEndFrame-movie->loopStartFrame+2)*sizeof(int));
+		break;
     }
     
 #ifdef ARM9
     movie->loopStream = streamPtr;
 #else
-    movie->loopStream = malloc(movie->loopStreamSize);
+    movie->loopStream = (char*)malloc(movie->loopStreamSize);
 #endif
 
     if ( MEMORY_STREAM != movie->loopStreamType )
-        *(int*)(movie->loopStream+movie->frameSize*2) = (movie->loopEndFrame-movie->loopStartFrame);
+        *(int*)(movie->loopStream+movie->frameSize*2) = (movie->loopEndFrame-movie->loopStartFrame+1);
     movieLoopSetup(movie);
 }
 
@@ -358,17 +361,6 @@ int readMovie(u8* fb, movie_state_s* movie)
                 movie->file = NULL;
             }
             movie->curLoop = 1;
-
-            /*if ( 0 != movie->loopsToDo && movie->curFrame < movie->framesCount-1 )
-            {
-                // Correction for corrupted compressed movies
-                movie->framesCount = movie->curFrame;
-                if ( movie->loopStartFrame >= movie->framesCount )
-                    movie->loopStartFrame = movie->framesCount-1;
-                if ( movie->loopEndFrame >= movie->framesCount )
-                    movie->loopEndFrame = movie->framesCount-1;
-                movieLoopSetup(movie);
-            }*/
         }
 
         if ( NULL != movie->loopStream && movie->curFrame >= movie->loopStartFrame && movie->curFrame <= movie->loopEndFrame )
@@ -416,9 +408,9 @@ int readMovie(u8* fb, movie_state_s* movie)
                     {
                         comp_manager_s compTmp = *movie->comp;
                         compTmp.reverse = 1;
-                        if ( movie->curLoop == 1 ) // By-pass bug on first loop, ugly, no logic explanation found...
-                            frameToGet++;
-                        int offset = *(int*)(movie->loopStream + 2*movie->frameSize + (1+frameToGet)*sizeof(int));
+                        if ( frameToGet == movie->loopEndFrame-movie->loopStartFrame-1 )
+                             compTmp.frame_prev_read = movie->loopEndFrameStream;
+                        int offset = *(int*)(movie->loopStream + 2*movie->frameSize + (2+frameToGet)*sizeof(int));
                         if ( MEMORY_COMPRESSED_STREAM == movie->loopStreamType )
                         {
                             compTmp.frame_comp = (char*)offset;
