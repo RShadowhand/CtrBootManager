@@ -88,7 +88,7 @@ void getMovieDataOffsetForFrames(void* iFileHandlePtr, int iFrameBufferSize, int
         if ( NULL != oStartFrameOffset )
             *oStartFrameOffset = iFrameBufferSize * ( ( iStartFrame < framesCount ) ? iStartFrame : (framesCount-1) );
         if ( NULL != oDataSizeToEndFrame )
-            *oDataSizeToEndFrame = iFrameBufferSize * ( ( iEndFrame < framesCount ) ? iEndFrame : (framesCount-1) );
+            *oDataSizeToEndFrame = iFrameBufferSize * ( ( iEndFrame < framesCount ) ? (iEndFrame+1) : framesCount );
     }
     else
     {
