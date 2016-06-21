@@ -8,13 +8,13 @@ extern "C" {
 #ifdef ARM9
 
 #include "arm9/source/common.h"
-#define CONFIG_PATH "/a9lh.cfg\0Free space for binary patch to chainload another instance of CtrBootManager9... Space ends up now!"
+#define CONFIG_PATH "/homebrew/bootmgr.cfg\0Free space for binary patch to chainload another instance of CtrBootManager9...    End"
 
 #else
     
 #include <3ds.h>
 #include "utility.h"
-#define CONFIG_PATH "/boot.cfg"
+#define CONFIG_PATH "/homebrew/bootmgr.cfg"
 
 #endif
 
