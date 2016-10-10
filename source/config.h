@@ -8,13 +8,13 @@ extern "C" {
 #ifdef ARM9
 
 #include "arm9/source/common.h"
-#define CONFIG_PATH "/homebrew/3ds/bootmgr.cfg\0Free space for binary patch to chainload another instance of CtrBootManager9...End"
+#define CONFIG_PATH "/shadownand/bootmgr.cfg\0Free space for binary patch to chainload another instance of CtrBootManager9.....End"
 
 #else
     
 #include <3ds.h>
 #include "utility.h"
-#define CONFIG_PATH "/homebrew/3ds/bootmgr.cfg"
+#define CONFIG_PATH "/shadownand/bootmgr.cfg"
 
 #endif
 
